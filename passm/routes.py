@@ -65,3 +65,26 @@ def view_passwords():
     return render_template('passwords_list.html', resources=resource_list)
 
 
+@main.route('/vault/new', methods=['GET', 'POST'])
+def add_vault():
+    if request.method == 'POST':
+        vault_details = request.form
+        vault = vault_details.get('vault-name')
+        description = vault_details.get('vault-description')
+
+        if vault:
+            db = get_db()
+            cur = db.cursor()
+            try:
+                cur.execute("INSERT INTO vault (vault_name, vault_description) VALUES (%s, %s)", (vault, description))
+                db.commit()
+                flash('Vault added successfully', 'info')
+                return redirect(url_for('main.add_vault'))
+            except Exception as e:
+                db.rollback()
+                print("An error occurred:", e)
+                flash('Failed to add vault', 'danger')
+            finally:
+                cur.close()
+
+    return render_template('add_vault.html')
