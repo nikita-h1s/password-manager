@@ -54,4 +54,14 @@ def view_passwords():
     cur.close()
     db.close()
 
-    return render_template('passwords_list.html', resources=resources)
+    resource_list = []
+    for resource in resources:
+        resource_dict = {
+            'name': resource[0],
+            'password': resource[1]
+        }
+        resource_list.append(resource_dict)
+
+    return render_template('passwords_list.html', resources=resource_list)
+
+
