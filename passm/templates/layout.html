@@ -102,7 +102,7 @@
                         data-bs-target="#vaults-collapse" aria-expanded="false">
                     Vaults
                 </button>
-                <a href="" data-bs-toggle="tooltip" data-bs-title="Add New Vault" data-bs-placement="bottom">
+                <a href="{{ url_for('main.add_vault') }}" data-bs-toggle="tooltip" data-bs-title="Add New Vault" data-bs-placement="bottom">
                     <img src="{{ url_for('static', filename='icons/add_folder_white.svg') }}" alt="Add folder icon"
                          width="23px">
                 </a>
