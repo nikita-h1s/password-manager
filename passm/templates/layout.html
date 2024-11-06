@@ -102,17 +102,17 @@
                         data-bs-target="#vaults-collapse" aria-expanded="false">
                     Vaults
                 </button>
-                <a href="{{ url_for('main.add_vault') }}" data-bs-toggle="tooltip" data-bs-title="Add New Vault" data-bs-placement="bottom">
+                <a href="{{ url_for('main.add_vault') }}" data-bs-toggle="tooltip" data-bs-title="Add New Vault"
+                   data-bs-placement="bottom">
                     <img src="{{ url_for('static', filename='icons/add_folder_white.svg') }}" alt="Add folder icon"
                          width="23px">
                 </a>
             </div>
             <div class="collapse" id="vaults-collapse">
                 <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                    <li><a href="#" class="link-dark rounded">New</a></li>
-                    <li><a href="#" class="link-dark rounded">Processed</a></li>
-                    <li><a href="#" class="link-dark rounded">Shipped</a></li>
-                    <li><a href="#" class="link-dark rounded">Returned</a></li>
+                    {% for vault in vaults %}
+                        <li><a href="#" class="link-dark rounded">{{ vault.name }}</a></li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>

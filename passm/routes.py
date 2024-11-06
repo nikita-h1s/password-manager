@@ -4,10 +4,10 @@ from .db import get_db
 main = Blueprint('main', __name__)
 
 
-@main.route('/')
-@main.route('/home')
-def home():
-    return render_template('passwords_list.html')
+# @main.route('/')
+# @main.route('/home')
+# def home():
+#     return render_template('layout.html')
 
 
 @main.route('/resource/new', methods=['GET', 'POST'])
@@ -88,3 +88,25 @@ def add_vault():
                 cur.close()
 
     return render_template('add_vault.html')
+
+
+@main.route('/')
+@main.route('/home')
+def view_vaults():
+    db = get_db()
+    cur = db.cursor()
+    sql_query = "SELECT vault.vault_name, vault.vault_description FROM vault;"
+    cur.execute(sql_query)
+    vaults = cur.fetchall()
+    cur.close()
+    db.close()
+
+    vault_list = []
+    for vault in vaults:
+        vault_dict = {
+            'name': vault[0],
+            'description': vault[1]
+        }
+        vault_list.append(vault_dict)
+
+    return render_template('layout.html', vaults=vault_list)
