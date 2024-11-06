@@ -12,12 +12,14 @@ main = Blueprint('main', __name__)
 
 @main.route('/resource/new', methods=['GET', 'POST'])
 def add_resource():
+    vault_list = retrieve_vaults()
     if request.method == 'POST':
         resource_details = request.form
         resource = resource_details.get('name')
         password = resource_details.get('password')
+        vault_id = resource_details.get('vault-id')
 
-        if resource and password:
+        if resource and password and vault_id:
             db = get_db()
             cur = db.cursor()
             try:
@@ -26,6 +28,9 @@ def add_resource():
 
                 cur.execute("INSERT INTO password (encrypted_password, resource_id) VALUES (%s, %s)",
                             (password, resource_id))
+
+                cur.execute("INSERT INTO resource_vault (resource_id, vault_id) VALUES (%s, %s)",
+                            (resource_id, vault_id))
                 db.commit()
                 flash('Resource added successfully', 'info')
 
@@ -39,7 +44,7 @@ def add_resource():
         elif not resource or not password:
             flash('Please fill out all fields', 'danger')
 
-    return render_template('add_resource.html')
+    return render_template('add_resource.html', vaults=vault_list)
 
 
 @main.route('/password-list')
@@ -50,6 +55,33 @@ def view_passwords():
                    INNER JOIN password
                    ON password.resource_id = resource.resource_id;"""
     cur.execute(sql_query)
+    resources = cur.fetchall()
+    cur.close()
+    db.close()
+
+    resource_list = []
+    for resource in resources:
+        resource_dict = {
+            'name': resource[0],
+            'password': resource[1]
+        }
+        resource_list.append(resource_dict)
+
+    return render_template('passwords_list.html', resources=resource_list)
+
+
+@main.route('/password-list/<int:vault_id>')
+def view_vault_passwords(vault_id):
+    db = get_db()
+    cur = db.cursor()
+    sql_query = """
+        SELECT resource.resource_name, password.encrypted_password 
+        FROM resource
+        INNER JOIN password ON password.resource_id = resource.resource_id
+        INNER JOIN resource_vault ON resource.resource_id = resource_vault.resource_id
+        WHERE resource_vault.vault_id = %s;
+    """
+    cur.execute(sql_query, (vault_id,))
     resources = cur.fetchall()
     cur.close()
     db.close()
@@ -93,9 +125,16 @@ def add_vault():
 @main.route('/')
 @main.route('/home')
 def view_vaults():
+    vault_list = retrieve_vaults()
+
+    return render_template('layout.html', vaults=vault_list)
+
+
+def retrieve_vaults():
+    """Returns a list of vaults"""
     db = get_db()
     cur = db.cursor()
-    sql_query = "SELECT vault.vault_name, vault.vault_description FROM vault;"
+    sql_query = "SELECT vault.vault_id, vault.vault_name, vault.vault_description FROM vault;"
     cur.execute(sql_query)
     vaults = cur.fetchall()
     cur.close()
@@ -104,9 +143,10 @@ def view_vaults():
     vault_list = []
     for vault in vaults:
         vault_dict = {
-            'name': vault[0],
-            'description': vault[1]
+            'id': vault[0],
+            'name': vault[1],
+            'description': vault[2]
         }
         vault_list.append(vault_dict)
 
-    return render_template('layout.html', vaults=vault_list)
+    return vault_list
