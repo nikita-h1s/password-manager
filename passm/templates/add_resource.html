@@ -14,6 +14,13 @@
                        name="password">
             </div>
 
+            <select class="form-select" aria-label="Vault select menu" name="vault-id">
+                <option selected disabled>Select a vault</option>
+                {% for vault in vaults %}
+                    <option value="{{ vault.id }}">{{ vault.name }}</option>
+                {% endfor %}
+            </select>
+
             <button type="submit" class="btn btn-primary">Add</button>
         </form>
         {% with messages = get_flashed_messages(with_categories=true) %}
