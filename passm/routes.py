@@ -23,10 +23,12 @@ def add_resource():
             db = get_db()
             cur = db.cursor()
             try:
-                cur.execute("INSERT INTO resource (resource_name) VALUES (%s)", (resource,))
+                cur.execute("INSERT INTO resource (resource_name, creation_date) VALUES (%s, NOW())", (resource,))
                 resource_id = cur.lastrowid
 
-                cur.execute("INSERT INTO password (encrypted_password, resource_id) VALUES (%s, %s)",
+                cur.execute("""INSERT INTO password (encrypted_password, resource_id, 
+                               creation_date, last_modified_date) 
+                               VALUES (%s, %s, NOW(), NOW())""",
                             (password, resource_id))
 
                 cur.execute("INSERT INTO resource_vault (resource_id, vault_id) VALUES (%s, %s)",
