@@ -50,17 +50,20 @@ def add_resource():
 @main.route('/password-list')
 def view_all_passwords():
     resource_list = get_resources_by_vault()
-    return render_template('passwords_list.html', resources=resource_list)
+    vault_list = retrieve_vaults()
+    return render_template('passwords_list.html', resources=resource_list, vaults=vault_list)
 
 
 @main.route('/password-list/<int:vault_id>')
 def view_vault_passwords(vault_id):
     resource_list = get_resources_by_vault(vault_id)
-    return render_template('passwords_list.html', resources=resource_list)
+    vault_list = retrieve_vaults()
+    return render_template('passwords_list.html', resources=resource_list, vaults=vault_list)
 
 
 @main.route('/vault/new', methods=['GET', 'POST'])
 def add_vault():
+    vault_list = retrieve_vaults()
     if request.method == 'POST':
         vault_details = request.form
         vault = vault_details.get('vault-name')
@@ -81,7 +84,7 @@ def add_vault():
             finally:
                 cur.close()
 
-    return render_template('add_vault.html')
+    return render_template('add_vault.html', vaults=vault_list)
 
 
 @main.route('/')
