@@ -48,52 +48,14 @@ def add_resource():
 
 
 @main.route('/password-list')
-def view_passwords():
-    db = get_db()
-    cur = db.cursor()
-    sql_query = """SELECT resource.resource_name, password.encrypted_password FROM resource
-                   INNER JOIN password
-                   ON password.resource_id = resource.resource_id;"""
-    cur.execute(sql_query)
-    resources = cur.fetchall()
-    cur.close()
-    db.close()
-
-    resource_list = []
-    for resource in resources:
-        resource_dict = {
-            'name': resource[0],
-            'password': resource[1]
-        }
-        resource_list.append(resource_dict)
-
+def view_all_passwords():
+    resource_list = get_resources_by_vault()
     return render_template('passwords_list.html', resources=resource_list)
 
 
 @main.route('/password-list/<int:vault_id>')
 def view_vault_passwords(vault_id):
-    db = get_db()
-    cur = db.cursor()
-    sql_query = """
-        SELECT resource.resource_name, password.encrypted_password 
-        FROM resource
-        INNER JOIN password ON password.resource_id = resource.resource_id
-        INNER JOIN resource_vault ON resource.resource_id = resource_vault.resource_id
-        WHERE resource_vault.vault_id = %s;
-    """
-    cur.execute(sql_query, (vault_id,))
-    resources = cur.fetchall()
-    cur.close()
-    db.close()
-
-    resource_list = []
-    for resource in resources:
-        resource_dict = {
-            'name': resource[0],
-            'password': resource[1]
-        }
-        resource_list.append(resource_dict)
-
+    resource_list = get_resources_by_vault(vault_id)
     return render_template('passwords_list.html', resources=resource_list)
 
 
@@ -150,3 +112,28 @@ def retrieve_vaults():
         vault_list.append(vault_dict)
 
     return vault_list
+
+
+def get_resources_by_vault(vault_id=None):
+    db = get_db()
+    cur = db.cursor()
+    if vault_id:
+        sql_query = """
+                SELECT resource.resource_name, password.encrypted_password 
+                FROM resource
+                INNER JOIN password ON password.resource_id = resource.resource_id
+                INNER JOIN resource_vault ON resource.resource_id = resource_vault.resource_id
+                WHERE resource_vault.vault_id = %s;
+            """
+        cur.execute(sql_query, (vault_id,))
+    else:
+        sql_query = """SELECT resource.resource_name, password.encrypted_password FROM resource
+                           INNER JOIN password
+                           ON password.resource_id = resource.resource_id;"""
+        cur.execute(sql_query)
+
+    resources = cur.fetchall()
+    cur.close()
+    db.close()
+
+    return [{'name': resource[0], 'password': resource[1]} for resource in resources]
