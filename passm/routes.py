@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from .db import get_db
-from .utils import retrieve_vaults, get_resources_by_vault
+from .utils import retrieve_vaults, get_resources_by_vault, encrypt_password, decrypt_password
 
 main = Blueprint('main', __name__)
 
@@ -18,19 +18,22 @@ def add_resource():
         resource_details = request.form
         resource = resource_details.get('name')
         password = resource_details.get('password')
+        url = resource_details.get('url')
         vault_id = resource_details.get('vault-id')
 
         if resource and password and vault_id:
             db = get_db()
             cur = db.cursor()
+            encrypted_password = encrypt_password(password)
             try:
-                cur.execute("INSERT INTO resource (resource_name, creation_date) VALUES (%s, NOW())", (resource,))
+                cur.execute("INSERT INTO resource (resource_name, resource_url, creation_date) VALUES (%s, %s, NOW())",
+                            (resource, url))
                 resource_id = cur.lastrowid
 
                 cur.execute("""INSERT INTO password (encrypted_password, resource_id, 
                                creation_date, last_modified_date) 
                                VALUES (%s, %s, NOW(), NOW())""",
-                            (password, resource_id))
+                            (encrypted_password, resource_id))
 
                 cur.execute("INSERT INTO resource_vault (resource_id, vault_id) VALUES (%s, %s)",
                             (resource_id, vault_id))

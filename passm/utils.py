@@ -1,4 +1,7 @@
+import os
+from cryptography.fernet import Fernet
 from .db import get_db
+
 
 def retrieve_vaults():
     """Returns a list of vaults"""
@@ -44,4 +47,16 @@ def get_resources_by_vault(vault_id=None):
     cur.close()
     db.close()
 
-    return [{'name': resource[0], 'password': resource[1]} for resource in resources]
+    return [{'name': resource[0], 'password': decrypt_password(resource[1])} for resource in resources]
+
+
+def encrypt_password(password):
+    crypter = Fernet(os.environ.get('ENCRYPTION_KEY'))
+    encrypted_password = crypter.encrypt(password.encode('utf-8'))
+    return encrypted_password
+
+
+def decrypt_password(encrypted_password):
+    crypter = Fernet(os.environ.get('ENCRYPTION_KEY'))
+    decrypted_password = crypter.decrypt(encrypted_password)
+    return decrypted_password.decode('utf-8')
