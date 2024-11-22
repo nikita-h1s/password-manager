@@ -1,6 +1,7 @@
 import os
 from cryptography.fernet import Fernet
 from .db import get_db
+from datetime import datetime
 
 
 def retrieve_vaults():
@@ -30,7 +31,8 @@ def get_resources_by_vault(vault_id=None):
     cur = db.cursor()
     if vault_id:
         sql_query = """
-                SELECT resource.resource_name, password.encrypted_password 
+                SELECT resource.resource_id, resource.resource_name, password.encrypted_password,
+                       resource.creation_date, resource.resource_url, password.last_modified_date 
                 FROM resource
                 INNER JOIN password ON password.resource_id = resource.resource_id
                 INNER JOIN resource_vault ON resource.resource_id = resource_vault.resource_id
@@ -38,17 +40,27 @@ def get_resources_by_vault(vault_id=None):
             """
         cur.execute(sql_query, (vault_id,))
     else:
-        sql_query = """SELECT resource.resource_name, password.encrypted_password FROM resource
-                           INNER JOIN password
-                           ON password.resource_id = resource.resource_id;"""
+        sql_query = """SELECT resource.resource_id, resource.resource_name, password.encrypted_password,
+                              resource.creation_date, resource.resource_url, password.last_modified_date 
+                       FROM resource
+                       INNER JOIN password
+                       ON password.resource_id = resource.resource_id;"""
         cur.execute(sql_query)
 
     resources = cur.fetchall()
     cur.close()
     db.close()
 
-    return [{'name': resource[0], 'password': decrypt_password(resource[1])} for resource in resources]
+    resource_list = {}
+    for resource in resources:
+        resource_id = resource[0]
+        resource_creation_date = resource[3].strftime('%d %b %Y, %H:%M')
+        pass_last_modified_date = resource[5].strftime('%d %b %Y, %H:%M')
+        resource_list[resource_id] = {'name': resource[1], 'password': decrypt_password(resource[2]),
+                                      'resource_creation_date': resource_creation_date, 'resource_url': resource[4],
+                                      'pass_last_modified_date': pass_last_modified_date}
 
+    return resource_list
 
 def encrypt_password(password):
     crypter = Fernet(os.environ.get('ENCRYPTION_KEY'))

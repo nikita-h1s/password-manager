@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from .db import get_db
-from .utils import retrieve_vaults, get_resources_by_vault, encrypt_password, decrypt_password
+from .utils import retrieve_vaults, get_resources_by_vault, encrypt_password
 
 main = Blueprint('main', __name__)
 
@@ -99,3 +99,39 @@ def view_vaults():
     vault_list = retrieve_vaults()
 
     return render_template('layout.html', vaults=vault_list)
+
+
+@main.route('/update-resource', methods=['POST'])
+def update_resource():
+    db = get_db()
+    cur = db.cursor()
+
+    if request.method == 'POST':
+        resource_details = request.form
+        resource_id = resource_details.get('resource-id')
+        resource_name = resource_details.get('name')
+        resource_url = resource_details.get('url')
+        resource_password = resource_details.get('password')
+        cur.execute("SELECT * FROM resource WHERE resource_id = %s", (resource_id,))
+        resource = cur.fetchone()
+        if resource:
+            encrypted_password = encrypt_password(resource_password)
+            sql_query_resource = """UPDATE resource
+                           SET resource_url = %s 
+                           WHERE resource_id = %s"""
+            resource_params = (resource_url, resource_id)
+
+            sql_query_password = """UPDATE password
+                                    SET last_modified_date = NOW(),
+                                    encrypted_password = %s
+                                    WHERE resource_id = %s"""
+            password_params = (encrypted_password, resource_id)
+
+            cur.execute(sql_query_resource, resource_params)
+            cur.execute(sql_query_password, password_params)
+            db.commit()
+            flash('Resource updated successfully!', 'success')
+        else:
+            flash('Resource not found. Update failed.', 'error')
+
+    return redirect(url_for('main.view_all_passwords'))
