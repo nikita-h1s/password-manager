@@ -176,6 +176,16 @@ main {
     border-radius: 3px;
 }
 
+.resource-info-header {
+    padding: 5px;
+}
+
+.form-control:disabled, .form-control[readonly] {
+    background-color: transparent;
+    border: none;
+    color: white;
+}
+
 .resource-info-input.form-control:disabled,
 .resource-info-input.form-control[readonly] {
     background-color: transparent !important;
@@ -188,10 +198,19 @@ main {
     border-color: #434A50;
 }
 
+.resource-name {
+    width: 250px;
+    height: 35px;
+}
+
 .text-body-secondary {
     color: var(--bs-secondary-color);
 }
 
 .edit-button {
     width: 65px;
+}
+
+.pass-monitor-button {
+    width: 100%;
 }

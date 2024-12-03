@@ -86,7 +86,7 @@
         <hr>
         <ul class="nav nav-pills flex-column">
             <li class="nav-item">
-                <a href="{{ url_for('main.view_all_passwords') }}" class="nav-link active" aria-current="page">
+                <a href="{{ url_for('main.view_password_list') }}" class="nav-link active" aria-current="page">
                     <svg class="bi me-2" width="16" height="16">
                         <use xlink:href="#home"/>
                     </svg>
@@ -111,13 +111,16 @@
             <div class="collapse" id="vaults-collapse">
                 <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
                     {% for vault in vaults %}
-                        <li><a href="{{ url_for('main.view_vault_passwords', vault_id=vault.id) }}"
+                        <li><a href="{{ url_for('main.view_password_list', vault_id=vault.id) }}"
                                class="link-dark rounded">{{ vault.name }}</a></li>
                     {% endfor %}
                 </ul>
             </div>
         </div>
+
+
         <div class="mt-auto">
+            <a type="button" class="btn btn-secondary pass-monitor-button">Pass Monitor</a>
             <hr>
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"

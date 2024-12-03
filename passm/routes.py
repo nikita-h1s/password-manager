@@ -53,18 +53,38 @@ def add_resource():
     return render_template('add_resource.html', vaults=vault_list)
 
 
-@main.route('/password-list')
-def view_all_passwords():
-    resource_list = get_resources_by_vault()
-    vault_list = retrieve_vaults()
-    return render_template('passwords_list.html', resources=resource_list, vaults=vault_list)
+@main.route('/password-list/', defaults={'vault_id': None, 'resource_id': None})
+@main.route('/password-list/resource/<int:resource_id>', defaults={'vault_id': None})
+@main.route('/password-list/vault/<int:vault_id>', defaults={'resource_id': None})
+@main.route('/password-list/vault/<int:vault_id>/resource/<int:resource_id>')
+def view_password_list(vault_id, resource_id):
+    # Fetch resources based on the provided vault_id
+    if vault_id is not None:
+        resource_list = get_resources_by_vault(vault_id)
+    else:
+        resource_list = get_resources_by_vault()
 
-
-@main.route('/password-list/<int:vault_id>')
-def view_vault_passwords(vault_id):
-    resource_list = get_resources_by_vault(vault_id)
     vault_list = retrieve_vaults()
-    return render_template('passwords_list.html', resources=resource_list, vaults=vault_list)
+
+    selected_resource_id = None
+    if resource_id:
+        db = get_db()
+        cur = db.cursor()
+        query = """SELECT resource.resource_id
+                           FROM resource
+                           WHERE resource.resource_id = %s"""
+        cur.execute(query, (resource_id,))
+        result = cur.fetchone()
+        if result:
+            selected_resource_id = result[0]
+
+    return render_template(
+        'passwords_list.html',
+        resources=resource_list,
+        vaults=vault_list,
+        selected_resource_id=selected_resource_id,
+        selected_vault=vault_id
+    )
 
 
 @main.route('/vault/new', methods=['GET', 'POST'])
@@ -117,9 +137,10 @@ def update_resource():
         if resource:
             encrypted_password = encrypt_password(resource_password)
             sql_query_resource = """UPDATE resource
-                           SET resource_url = %s 
+                           SET resource_name = %s,
+                               resource_url = %s 
                            WHERE resource_id = %s"""
-            resource_params = (resource_url, resource_id)
+            resource_params = (resource_name, resource_url, resource_id)
 
             sql_query_password = """UPDATE password
                                     SET last_modified_date = NOW(),
@@ -134,4 +155,4 @@ def update_resource():
         else:
             flash('Resource not found. Update failed.', 'error')
 
-    return redirect(url_for('main.view_all_passwords'))
+    return redirect(url_for('main.view_password_list'))
