@@ -82,8 +82,7 @@ def view_password_list(vault_id, resource_id):
         'passwords_list.html',
         resources=resource_list,
         vaults=vault_list,
-        selected_resource_id=selected_resource_id,
-        selected_vault=vault_id
+        selected_resource_id=selected_resource_id
     )
 
 
@@ -121,38 +120,53 @@ def view_vaults():
     return render_template('layout.html', vaults=vault_list)
 
 
-@main.route('/update-resource', methods=['POST'])
-def update_resource():
+@main.route('/password-list/', defaults={'vault_id': None, 'resource_id': None}, methods=['POST'])
+@main.route('/password-list/resource/<int:resource_id>', defaults={'vault_id': None}, methods=['POST'])
+@main.route('/password-list/vault/<int:vault_id>', defaults={'resource_id': None}, methods=['POST'])
+@main.route('/password-list/vault/<int:vault_id>/resource/<int:resource_id>', methods=['POST'])
+def manage_resource(resource_id=None, vault_id=None):
     db = get_db()
     cur = db.cursor()
 
-    if request.method == 'POST':
-        resource_details = request.form
-        resource_id = resource_details.get('resource-id')
-        resource_name = resource_details.get('name')
-        resource_url = resource_details.get('url')
-        resource_password = resource_details.get('password')
-        cur.execute("SELECT * FROM resource WHERE resource_id = %s", (resource_id,))
-        resource = cur.fetchone()
-        if resource:
-            encrypted_password = encrypt_password(resource_password)
-            sql_query_resource = """UPDATE resource
-                           SET resource_name = %s,
-                               resource_url = %s 
-                           WHERE resource_id = %s"""
-            resource_params = (resource_name, resource_url, resource_id)
+    if not resource_id:
+        resource_id = request.form.get('resource-id')
 
-            sql_query_password = """UPDATE password
-                                    SET last_modified_date = NOW(),
-                                    encrypted_password = %s
-                                    WHERE resource_id = %s"""
-            password_params = (encrypted_password, resource_id)
+    if request.form['action'] == 'update':
+        if request.method == 'POST':
+            resource_details = request.form
+            resource_id = resource_details.get('resource-id')
+            resource_name = resource_details.get('name')
+            resource_url = resource_details.get('url')
+            resource_password = resource_details.get('password')
+            cur.execute("SELECT * FROM resource WHERE resource_id = %s", (resource_id,))
+            resource = cur.fetchone()
+            if resource:
+                encrypted_password = encrypt_password(resource_password)
+                sql_query_resource = """UPDATE resource
+                               SET resource_name = %s,
+                                   resource_url = %s 
+                               WHERE resource_id = %s"""
+                resource_params = (resource_name, resource_url, resource_id)
 
-            cur.execute(sql_query_resource, resource_params)
-            cur.execute(sql_query_password, password_params)
+                sql_query_password = """UPDATE password
+                                        SET last_modified_date = NOW(),
+                                        encrypted_password = %s
+                                        WHERE resource_id = %s"""
+                password_params = (encrypted_password, resource_id)
+
+                cur.execute(sql_query_resource, resource_params)
+                cur.execute(sql_query_password, password_params)
+                db.commit()
+                flash('Resource updated successfully!', 'success')
+            else:
+                flash('Resource not found. Update failed.', 'error')
+    elif request.form['action'] == 'delete':
+        if resource_id:
+            query = """DELETE FROM resource WHERE resource_id = %s"""
+            cur.execute(query, (resource_id,))
             db.commit()
-            flash('Resource updated successfully!', 'success')
+            flash('Resource deleted successfully!', 'info')
         else:
-            flash('Resource not found. Update failed.', 'error')
+            flash('Resource not found. Delete failed.', 'danger')
 
     return redirect(url_for('main.view_password_list'))
