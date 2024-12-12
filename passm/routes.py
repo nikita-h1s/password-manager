@@ -1,14 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from .db import get_db
-from .utils import retrieve_vaults, get_resources_by_vault, encrypt_password
+from .utils import retrieve_vaults, get_resources_by_vault, encrypt_password, get_password_stats
 
 main = Blueprint('main', __name__)
-
-
-# @main.route('/')
-# @main.route('/home')
-# def home():
-#     return render_template('layout.html')
 
 
 @main.route('/resource/new', methods=['GET', 'POST'])
@@ -26,7 +20,8 @@ def add_resource():
             cur = db.cursor()
             encrypted_password = encrypt_password(password)
             try:
-                cur.execute("INSERT INTO resource (resource_name, resource_url, creation_date) VALUES (%s, %s, NOW())",
+                cur.execute("INSERT INTO resource (resource_name, resource_url, creation_date)"
+                            "VALUES (%s, %s, NOW())",
                             (resource, url))
                 resource_id = cur.lastrowid
 
@@ -98,7 +93,8 @@ def add_vault():
             db = get_db()
             cur = db.cursor()
             try:
-                cur.execute("INSERT INTO vault (vault_name, vault_description) VALUES (%s, %s)", (vault, description))
+                cur.execute("INSERT INTO vault (vault_name, vault_description) VALUES (%s, %s)",
+                            (vault, description))
                 db.commit()
                 flash('Vault added successfully', 'info')
                 return redirect(url_for('main.add_vault'))
@@ -170,3 +166,13 @@ def manage_resource(resource_id=None, vault_id=None):
             flash('Resource not found. Delete failed.', 'danger')
 
     return redirect(url_for('main.view_password_list'))
+
+
+@main.route('/pass-monitor/')
+def view_password_statistics():
+    vault_list = retrieve_vaults()
+    weak_password_list, repeated_password_list = get_password_stats()
+
+    return render_template('pass_monitor.html', vaults=vault_list,
+                           weak_password_list=weak_password_list,
+                           repeated_password_list=repeated_password_list)
