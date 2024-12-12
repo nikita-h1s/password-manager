@@ -214,3 +214,8 @@ main {
 .pass-monitor-button {
     width: 100%;
 }
+
+.hidden {
+    display: none;
+}
+
