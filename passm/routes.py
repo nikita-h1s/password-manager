@@ -11,18 +11,21 @@ def add_resource():
     if request.method == 'POST':
         resource_details = request.form
         resource = resource_details.get('name')
+        username = resource_details.get('username')
+        email = resource_details.get('email')
         password = resource_details.get('password')
         url = resource_details.get('url')
         vault_id = resource_details.get('vault-id')
 
-        if resource and password and vault_id:
+        if resource and password and vault_id and email:
             db = get_db()
             cur = db.cursor()
             encrypted_password = encrypt_password(password)
             try:
-                cur.execute("INSERT INTO resource (resource_name, resource_url, creation_date)"
-                            "VALUES (%s, %s, NOW())",
-                            (resource, url))
+                cur.execute("INSERT INTO resource (resource_name, resource_username,"
+                            "resource_email, resource_url, creation_date)"
+                            "VALUES (%s, %s, %s, %s, NOW())",
+                            (resource, username, email, url))
                 resource_id = cur.lastrowid
 
                 cur.execute("""INSERT INTO password (encrypted_password, resource_id, 
@@ -132,6 +135,8 @@ def manage_resource(resource_id=None, vault_id=None):
             resource_details = request.form
             resource_id = resource_details.get('resource-id')
             resource_name = resource_details.get('name')
+            resource_username = resource_details.get('username')
+            resource_email = resource_details.get('email')
             resource_url = resource_details.get('url')
             resource_password = resource_details.get('password')
             cur.execute("SELECT * FROM resource WHERE resource_id = %s", (resource_id,))
@@ -140,9 +145,11 @@ def manage_resource(resource_id=None, vault_id=None):
                 encrypted_password = encrypt_password(resource_password)
                 sql_query_resource = """UPDATE resource
                                SET resource_name = %s,
-                                   resource_url = %s 
+                                   resource_url = %s,
+                                   resource_username = %s,
+                                   resource_email = %s 
                                WHERE resource_id = %s"""
-                resource_params = (resource_name, resource_url, resource_id)
+                resource_params = (resource_name, resource_url, resource_username, resource_email, resource_id)
 
                 sql_query_password = """UPDATE password
                                         SET last_modified_date = NOW(),
