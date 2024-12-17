@@ -151,6 +151,13 @@ main {
     overflow-y: auto;
 }
 
+.resource-stats-list {
+    min-width: 500px;
+    margin-left: 0;
+    margin-inline: 1.5rem;
+    overflow-y: auto;
+}
+
 .resource-list-item {
     background-color: transparent;
     cursor: pointer;
