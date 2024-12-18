@@ -56,31 +56,43 @@ def add_resource():
 @main.route('/password-list/vault/<int:vault_id>', defaults={'resource_id': None})
 @main.route('/password-list/vault/<int:vault_id>/resource/<int:resource_id>')
 def view_password_list(vault_id, resource_id):
-    # Fetch resources based on the provided vault_id
-    if vault_id is not None:
-        resource_list = get_resources_by_vault(vault_id)
-    else:
-        resource_list = get_resources_by_vault()
-
-    vault_list = retrieve_vaults()
+    # TODO: make a global cursor for not recreating same variables
+    db = get_db()
+    cur = db.cursor()
 
     selected_resource_id = None
+    vault_name = None
     if resource_id:
-        db = get_db()
-        cur = db.cursor()
         query = """SELECT resource.resource_id
                            FROM resource
                            WHERE resource.resource_id = %s"""
         cur.execute(query, (resource_id,))
         result = cur.fetchone()
+        cur.close()
         if result:
             selected_resource_id = result[0]
+
+    # Fetch resources based on the provided vault_id
+    if vault_id is not None:
+        resource_list = get_resources_by_vault(vault_id)
+        db = get_db()
+        cur = db.cursor()
+        vault_name_query = "SELECT vault_name FROM vault WHERE vault_id = %s"
+        cur.execute(vault_name_query, (vault_id,))
+        vault_name_result = cur.fetchone()
+        if vault_name_result:
+            vault_name = vault_name_result[0]  # Get the vault name
+    else:
+        resource_list = get_resources_by_vault()
+
+    vault_list = retrieve_vaults()
 
     return render_template(
         'passwords_list.html',
         resources=resource_list,
         vaults=vault_list,
-        selected_resource_id=selected_resource_id
+        selected_resource_id=selected_resource_id,
+        vault_name=vault_name
     )
 
 
