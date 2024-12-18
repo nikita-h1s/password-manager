@@ -31,7 +31,8 @@ def get_resources_by_vault(vault_id=None):
     cur = db.cursor()
     if vault_id:
         sql_query = """
-                SELECT resource.resource_id, resource.resource_name, password.encrypted_password,
+                SELECT resource.resource_id, resource.resource_name, resource.resource_username,
+                       resource.resource_email, password.encrypted_password,
                        resource.creation_date, resource.resource_url, password.last_modified_date 
                 FROM resource
                 INNER JOIN password ON password.resource_id = resource.resource_id
@@ -40,7 +41,8 @@ def get_resources_by_vault(vault_id=None):
             """
         cur.execute(sql_query, (vault_id,))
     else:
-        sql_query = """SELECT resource.resource_id, resource.resource_name, password.encrypted_password,
+        sql_query = """SELECT resource.resource_id, resource.resource_name, resource.resource_username,
+                              resource.resource_email, password.encrypted_password,
                               resource.creation_date, resource.resource_url, password.last_modified_date 
                        FROM resource
                        INNER JOIN password
@@ -54,10 +56,11 @@ def get_resources_by_vault(vault_id=None):
     resource_list = {}
     for resource in resources:
         resource_id = resource[0]
-        resource_creation_date = resource[3].strftime('%d %b %Y, %H:%M')
-        pass_last_modified_date = resource[5].strftime('%d %b %Y, %H:%M')
-        resource_list[resource_id] = {'name': resource[1], 'password': decrypt_password(resource[2]),
-                                      'resource_creation_date': resource_creation_date, 'resource_url': resource[4],
+        resource_creation_date = resource[5].strftime('%d %b %Y, %H:%M')
+        pass_last_modified_date = resource[7].strftime('%d %b %Y, %H:%M')
+        resource_list[resource_id] = {'name': resource[1], 'username': resource[2],
+                                      'email': resource[3], 'password': decrypt_password(resource[4]),
+                                      'resource_creation_date': resource_creation_date, 'resource_url': resource[6],
                                       'pass_last_modified_date': pass_last_modified_date}
 
     return resource_list
@@ -76,8 +79,11 @@ def decrypt_password(encrypted_password):
 
 
 def check_common_password(password):
-    # TODO: make a relative path
-    with open(r'D:\Programming\nure\pass-manager\passm\data\common-password.txt', 'r') as f:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    file_path = os.path.join(base_dir, 'data', 'common-password.txt')
+
+    with open(file_path, 'r') as f:
         common = f.read().splitlines()
 
     if password in common:
@@ -149,6 +155,39 @@ def get_password_stats():
         else:
             password_groups[decrypted_password] = [idx]
 
-    repeated_password_list = [group for group in password_groups.values() if len(group) > 1]
+    res = [group for group in password_groups.values() if len(group) > 1]
+    repeated_password_list = [item for sublist in res for item in sublist]
+
+    if weak_password_list:
+        # Weak password sql query
+        weak_password_query = """SELECT resource.resource_name, password.encrypted_password 
+                                         FROM password 
+                                         INNER JOIN resource ON password.resource_id = resource.resource_id 
+                                         WHERE resource.resource_id IN (%s)"""
+
+        placeholders = ', '.join(['%s'] * len(weak_password_list))
+        weak_password_query = weak_password_query % placeholders
+
+        cur.execute(weak_password_query, tuple(weak_password_list))
+        weak_password_list = cur.fetchall()
+        weak_password_list = [(p[0], decrypt_password(str(p[1]))) for p in weak_password_list]
+    else:
+        weak_password_list = []
+
+    if repeated_password_list:
+        # Repeated password sql query
+        repeated_password_query = """SELECT resource.resource_name, password.encrypted_password 
+                                     FROM password 
+                                     INNER JOIN resource ON password.resource_id = resource.resource_id 
+                                     WHERE resource.resource_id IN (%s)"""
+
+        placeholders = ', '.join(['%s'] * len(repeated_password_list))
+        repeated_password_query = repeated_password_query % placeholders
+
+        cur.execute(repeated_password_query, tuple(repeated_password_list))
+        repeated_password_list = cur.fetchall()
+        repeated_password_list = [(p[0], decrypt_password(str(p[1]))) for p in repeated_password_list]
+    else:
+        repeated_password_list = []
 
     return weak_password_list, repeated_password_list
