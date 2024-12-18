@@ -7,7 +7,7 @@ const initializeTooltips = () => {
 
 // Item information from password list
 const setupResourceClickHandlers = () => {
-    const resourceItems = document.querySelectorAll('.list-resource-item');
+    const resourceItems = document.querySelectorAll('.list-resource-item:not(.d-none)');
     const resourceName = document.querySelector('.resource-name');
     const resourceUsername = document.querySelector('.resource-username');
     const resourceEmail = document.querySelector('.resource-email');
@@ -158,6 +158,77 @@ const toggleListVisibility = () => {
 };
 
 
+const searchResource = () => {
+    const searchInput = document.querySelector('.search-resource-input');
+    const resources = document.querySelectorAll('.resource-to-search');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+
+            resources.forEach(resource => {
+                const resourceName = resource.querySelector('.resource-to-search-name').textContent.toLowerCase();
+
+                if (resourceName.includes(query)) {
+                    resource.classList.remove('d-none');
+                    resource.classList.add('d-flex');
+                    setupResourceClickHandlers();
+                } else {
+                    resource.classList.add('d-none');
+                    resource.classList.remove('d-flex');
+                    setupResourceClickHandlers();
+                }
+            });
+        });
+    }
+};
+
+
+const clearSearchInput = () => {
+    const clearButton = document.getElementById('clear-button');
+
+    if (clearButton) {
+        const searchInput = document.querySelector('.search-resource-input');
+        clearButton.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            searchInput.value = '';
+
+            const inputEvent = new Event('input');
+            searchInput.dispatchEvent(inputEvent);
+        })
+    }
+};
+
+
+// Saves the input text after the page reload
+const saveInputText = () => {
+    const inputField = document.querySelector('.search-resource-input');
+    const clearButton = document.getElementById('clear-button');
+
+    // Retrieve and set the saved input value
+    const savedValue = localStorage.getItem('searchInput');
+    if (savedValue) {
+        inputField.value = savedValue;
+
+        // Highlight the text
+        inputField.focus();
+        inputField.select();
+
+        const inputEvent = new Event('input');
+        inputField.dispatchEvent(inputEvent);
+    }
+
+    window.addEventListener('beforeunload', () => {
+        localStorage.setItem('searchInput', inputField.value);
+    });
+
+    clearButton.addEventListener('click', () => {
+        localStorage.removeItem('searchInput');
+    })
+};
+
+
 // Automatically removes flash messages after 3 seconds
 const removeFlashMessages = () => {
     setTimeout(() => {
@@ -175,4 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     editResourcesInformation();
     removeFlashMessages();
     toggleListVisibility();
+    searchResource();
+    clearSearchInput();
+    saveInputText();
 });
