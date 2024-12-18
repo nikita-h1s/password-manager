@@ -167,7 +167,8 @@ const searchResource = () => {
             const query = searchInput.value.toLowerCase();
 
             resources.forEach(resource => {
-                const resourceName = resource.querySelector('.resource-to-search-name').textContent.toLowerCase();
+                const resourceName = resource.querySelector('.resource-to-search-name')
+                    .textContent.toLowerCase();
 
                 if (resourceName.includes(query)) {
                     resource.classList.remove('d-none');
@@ -229,6 +230,28 @@ const saveInputText = () => {
 };
 
 
+const togglePasswordVisibility = () => {
+   const togglePasswordButtons = document.querySelectorAll('.toggle-password-btn');
+
+    togglePasswordButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const passwordInput = button.previousElementSibling;
+            const icon = button.querySelector('i');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+    });
+}
+
+
 // Automatically removes flash messages after 3 seconds
 const removeFlashMessages = () => {
     setTimeout(() => {
@@ -249,4 +272,5 @@ document.addEventListener('DOMContentLoaded', () => {
     searchResource();
     clearSearchInput();
     saveInputText();
+    togglePasswordVisibility();
 });
