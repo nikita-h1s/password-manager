@@ -224,9 +224,11 @@ const saveInputText = () => {
         localStorage.setItem('searchInput', inputField.value);
     });
 
-    clearButton.addEventListener('click', () => {
-        localStorage.removeItem('searchInput');
-    })
+    if (clearButton) {
+        clearButton.addEventListener('click', () => {
+            localStorage.removeItem('searchInput');
+        })
+    }
 };
 
 

@@ -1,6 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from datetime import datetime
+import json
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
 from .db import get_db
-from .utils import retrieve_vaults, get_resources_by_vault, encrypt_password, get_password_stats
+from .utils import retrieve_vaults, get_resources_by_vault, encrypt_password, decrypt_password, get_password_stats
+import io, csv
 
 main = Blueprint('main', __name__)
 
@@ -195,3 +199,59 @@ def view_password_statistics():
     return render_template('pass_monitor.html', vaults=vault_list,
                            weak_password_list=weak_password_list,
                            repeated_password_list=repeated_password_list)
+
+
+@main.route('/export/resources/', methods=['GET', 'POST'])
+def export_resources():
+    if request.method == 'GET':
+        return render_template('export.html')
+
+    file_format = request.form.get('format', 'csv')
+    db = get_db()
+    cur = db.cursor(dictionary=True)
+    query = """
+    SELECT resource.resource_name, resource.resource_email, resource.resource_username, resource.resource_url,
+           resource.creation_date, password.encrypted_password
+    FROM resource
+    INNER JOIN password ON resource.resource_id = password.resource_id;
+    """
+    cur.execute(query)
+    resources = cur.fetchall()
+
+    for resource in resources:
+        encrypted_password = resource.pop("encrypted_password", None)  # Remove encrypted_password from the dictionary
+        if encrypted_password:
+            try:
+                resource["password"] = decrypt_password(encrypted_password)  # Add decrypted value as "password"
+            except Exception as e:
+                resource["password"] = f"Error: {str(e)}"
+
+    if file_format == 'csv':
+        # Generate CSV file
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=resources[0].keys())
+        writer.writeheader()
+        writer.writerows(resources)
+        output.seek(0)
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment;filename=resources.csv'}
+        )
+
+    elif file_format == 'json':
+        for resource in resources:
+            for key, value in resource.items():
+                if isinstance(value, datetime):
+                    resource[key] = value.isoformat()
+
+        # Generate JSON file
+        return Response(
+            json.dumps(resources),
+            mimetype='application/json',
+            headers={'Content-Disposition': 'attachment;filename=resources.json'}
+        )
+
+    # If format is invalid, return an error response
+    return "Invalid format selected", 400
+

@@ -226,3 +226,9 @@ main {
     display: none;
 }
 
+.export-group {
+    width: 500px;
+    height: 235px;
+    border: solid 1px #434A50;
+    border-radius: 3px;
+}

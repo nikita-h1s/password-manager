@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="export-group mt-4 ml-4 p-3 d-flex flex-column">
+    <h4>Export</h4>
+    <hr>
+    <h6>File format</h6>
+    <form method="POST" action="{{ url_for('main.export_resources') }}" class="d-flex flex-column">
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="format" id="format_json" value="json">
+            <label class="form-check-label" for="format_json">
+                JSON
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="format" id="format_csv" value="csv" checked>
+            <label class="form-check-label" for="format_csv">
+                CSV
+            </label>
+        </div>
+        <button type="submit" name="action" class="btn btn-secondary mt-3">
+            Export
+        </button>
+    </form>
+</div>
+{% endblock content %}
