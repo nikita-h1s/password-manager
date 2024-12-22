@@ -1,10 +1,12 @@
-from datetime import datetime
+import csv
+import io
 import json
+from datetime import datetime
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
+
 from .db import get_db
 from .utils import retrieve_vaults, get_resources_by_vault, encrypt_password, decrypt_password, get_password_stats
-import io, csv
 
 main = Blueprint('main', __name__)
 
@@ -161,7 +163,7 @@ def manage_resource(resource_id=None, vault_id=None):
                 encrypted_password = encrypt_password(resource_password)
                 sql_query_resource = """UPDATE resource
                                SET resource_name = %s,
-                                   resource_url = %s,
+                                   resource.resource_url = %s,
                                    resource_username = %s,
                                    resource_email = %s 
                                WHERE resource_id = %s"""
@@ -254,4 +256,3 @@ def export_resources():
 
     # If format is invalid, return an error response
     return "Invalid format selected", 400
-
