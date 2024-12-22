@@ -197,10 +197,14 @@ def manage_resource(resource_id=None, vault_id=None):
 @main.route('/pass-monitor/')
 def view_password_statistics():
     vault_list = retrieve_vaults()
-    weak_password_list, repeated_password_list = get_password_stats()
+    (weak_password_list, okay_password_list, good_password_list,
+     strong_password_list, repeated_password_list) = get_password_stats()
 
     return render_template('pass_monitor.html', vaults=vault_list,
                            weak_password_list=weak_password_list,
+                           okay_password_list=okay_password_list,
+                           good_password_list=good_password_list,
+                           strong_password_list=strong_password_list,
                            repeated_password_list=repeated_password_list)
 
 

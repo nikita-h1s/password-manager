@@ -125,7 +125,7 @@ def password_strength(password):
 
 
 def get_password_stats():
-    """Returns arrays of weak & repeated passwords"""
+    """Returns arrays of repeated & different types of weak passwords"""
     # Fetching a list of passwords
     db = get_db()
     cur = db.cursor()
@@ -136,6 +136,9 @@ def get_password_stats():
 
     # Looking for weak passwords
     weak_password_ids = []
+    okay_password_ids = []
+    good_password_ids = []
+    strong_password_ids = []
     for idx, p in password_list:
         decrypted_password = decrypt_password(p)
         if check_common_password(decrypted_password):
@@ -143,8 +146,14 @@ def get_password_stats():
 
         strength, score = password_strength(decrypted_password)
 
-        if score <= 4:
+        if score < 4:
             weak_password_ids.append(idx)
+        elif score == 4:
+            okay_password_ids.append(idx)
+        elif 4 < score < 6:
+            good_password_ids.append(idx)
+        elif score >= 6:
+            strong_password_ids.append(idx)
 
     # Looking for repeated passwords
     password_groups = {}
@@ -174,5 +183,9 @@ def get_password_stats():
 
     weak_password_ids = fetch_password_details(weak_password_ids)
     repeated_password_ids = fetch_password_details(repeated_password_ids)
+    okay_password_ids = fetch_password_details(okay_password_ids)
+    good_password_ids = fetch_password_details(good_password_ids)
+    strong_password_ids = fetch_password_details(strong_password_ids)
 
-    return weak_password_ids, repeated_password_ids
+    return (weak_password_ids, okay_password_ids, good_password_ids,
+            strong_password_ids, repeated_password_ids)

@@ -1,0 +1,50 @@
+{% macro render_password_section(title, list_name, icon, no_items_message, is_first=False) %}
+<div href="#"
+     class="{{ list_name }} list-resource-stats-item
+                    list-group-item resource-list-item
+                    list-group-item-action
+                    gap-3 py-3 list-group-item-active {{ 'mt-3' if not is_first else '' }} "
+     aria-current="true" data-target="{{ list_name }}">
+    <div class="d-flex align-items-center">
+        <img src="{{ url_for('static', filename=icon) }}"
+             alt="{{ title }}" width="32"
+             height="32" class="rounded-circle flex-shrink-0">
+        <div class="pl-2 d-flex w-100 justify-content-between">
+            <div>
+                <h6 class="mb-0">{{ title }}</h6>
+                <p class="mb-0 opacity-75">{{ no_items_message }}</p>
+            </div>
+        </div>
+        <i class="bi bi-arrow-right-short" style="font-size: 24px;"></i>
+    </div>
+    <div class="d-flex mt-2 align-items-center">
+        {% if list_name|length == 0 %}
+        <h4>No Passwords Found</h4>
+        {% else %}
+        <h2>{{ list_name|length }}</h2>
+        <span class="ml-1 mt-1">resources</span>
+        {% endif %}
+    </div>
+</div>
+
+<div id="{{ list_name }}" class="list-group resource-list mt-2 d-none">
+    {% for p in list_name %}
+    <div href="#" class="list-group-item resource-list-item
+                                 list-group-item-action d-flex gap-3 py-3"
+         aria-current="true"
+         data-id="{{ id }}">
+        <img src="https://github.com/twbs.png" alt="twbs" width="32" height="32"
+             class="rounded-circle flex-shrink-0">
+        <div class="pl-2 d-flex w-100 justify-content-between">
+            <div>
+                <h6 class="mb-0">{{ p[0] }}</h6>
+                <p class="mb-0 opacity-75">Password: {{ p[1] }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    <button class="back-to-main btn btn-secondary mt-3"
+            data-target="{{ list_name }}">Back
+    </button>
+</div>
+{% endmacro %}
