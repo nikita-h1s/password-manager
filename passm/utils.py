@@ -135,16 +135,16 @@ def get_password_stats():
     password_list = cur.fetchall()
 
     # Looking for weak passwords
-    weak_password_list = []
+    weak_password_ids = []
     for idx, p in password_list:
         decrypted_password = decrypt_password(p)
         if check_common_password(decrypted_password):
-            weak_password_list.append(idx)
+            weak_password_ids.append(idx)
 
         strength, score = password_strength(decrypted_password)
 
         if score <= 4:
-            weak_password_list.append(idx)
+            weak_password_ids.append(idx)
 
     # Looking for repeated passwords
     password_groups = {}
@@ -156,38 +156,23 @@ def get_password_stats():
             password_groups[decrypted_password] = [idx]
 
     res = [group for group in password_groups.values() if len(group) > 1]
-    repeated_password_list = [item for sublist in res for item in sublist]
+    repeated_password_ids = [item for sublist in res for item in sublist]
 
-    if weak_password_list:
-        # Weak password sql query
-        weak_password_query = """SELECT resource.resource_name, password.encrypted_password 
-                                         FROM password 
-                                         INNER JOIN resource ON password.resource_id = resource.resource_id 
-                                         WHERE resource.resource_id IN (%s)"""
+    def fetch_password_details(ids):
+        if not ids:
+            return []
 
-        placeholders = ', '.join(['%s'] * len(weak_password_list))
-        weak_password_query = weak_password_query % placeholders
+        placeholders = ', '.join(['%s'] * len(ids))
+        query = f"""SELECT resource.resource_name, password.encrypted_password 
+                    FROM password 
+                    INNER JOIN resource ON password.resource_id = resource.resource_id 
+                    WHERE resource.resource_id IN ({placeholders});"""
+        cur.execute(query, tuple(ids))
+        result = cur.fetchall()
+        pass_list = [(p[0], decrypt_password(str(p[1]))) for p in result]
+        return pass_list
 
-        cur.execute(weak_password_query, tuple(weak_password_list))
-        weak_password_list = cur.fetchall()
-        weak_password_list = [(p[0], decrypt_password(str(p[1]))) for p in weak_password_list]
-    else:
-        weak_password_list = []
+    weak_password_ids = fetch_password_details(weak_password_ids)
+    repeated_password_ids = fetch_password_details(repeated_password_ids)
 
-    if repeated_password_list:
-        # Repeated password sql query
-        repeated_password_query = """SELECT resource.resource_name, password.encrypted_password 
-                                     FROM password 
-                                     INNER JOIN resource ON password.resource_id = resource.resource_id 
-                                     WHERE resource.resource_id IN (%s)"""
-
-        placeholders = ', '.join(['%s'] * len(repeated_password_list))
-        repeated_password_query = repeated_password_query % placeholders
-
-        cur.execute(repeated_password_query, tuple(repeated_password_list))
-        repeated_password_list = cur.fetchall()
-        repeated_password_list = [(p[0], decrypt_password(str(p[1]))) for p in repeated_password_list]
-    else:
-        repeated_password_list = []
-
-    return weak_password_list, repeated_password_list
+    return weak_password_ids, repeated_password_ids
