@@ -57,6 +57,7 @@ def add_resource():
     return render_template('add_resource.html', vaults=vault_list)
 
 
+@main.route('/', defaults={'vault_id': None, 'resource_id': None})
 @main.route('/password-list/', defaults={'vault_id': None, 'resource_id': None})
 @main.route('/password-list/resource/<int:resource_id>', defaults={'vault_id': None})
 @main.route('/password-list/vault/<int:vault_id>', defaults={'resource_id': None})
@@ -232,8 +233,19 @@ def export_resources():
         # Generate CSV file
         output = io.StringIO()
         writer = csv.DictWriter(output, fieldnames=resources[0].keys())
+
         writer.writeheader()
         writer.writerows(resources)
+
+        footer_row = {key: '' for key in resources[0].keys()}
+        fieldnames = list(resources[0].keys())
+
+        if len(fieldnames) >= 2:
+            footer_row[fieldnames[0]] = 'File Created On'
+            footer_row[fieldnames[1]] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        writer.writerow(footer_row)
+
         output.seek(0)
         return Response(
             output.getvalue(),
