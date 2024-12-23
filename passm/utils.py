@@ -188,14 +188,14 @@ def get_password_stats():
         pass_list = [(p[0], decrypt_password(str(p[1]))) for p in result]
         return pass_list
 
-    weak_password_ids = fetch_password_details(weak_password_ids)
-    repeated_password_ids = fetch_password_details(repeated_password_ids)
-    okay_password_ids = fetch_password_details(okay_password_ids)
-    good_password_ids = fetch_password_details(good_password_ids)
-    strong_password_ids = fetch_password_details(strong_password_ids)
+    weak_password_list = fetch_password_details(weak_password_ids)
+    repeated_password_list = fetch_password_details(repeated_password_ids)
+    okay_password_list = fetch_password_details(okay_password_ids)
+    good_password_list = fetch_password_details(good_password_ids)
+    strong_password_list = fetch_password_details(strong_password_ids)
 
-    return (weak_password_ids, okay_password_ids, good_password_ids,
-            strong_password_ids, repeated_password_ids)
+    return (weak_password_list, okay_password_list, good_password_list,
+            strong_password_list, repeated_password_list)
 
 
 def get_favicon_url(domain_url):
