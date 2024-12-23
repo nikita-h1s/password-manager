@@ -5,6 +5,7 @@
 __pycache__/
 
 instance/
+passm/static/icons/favicons
 
 .pytest_cache/
 .coverage
