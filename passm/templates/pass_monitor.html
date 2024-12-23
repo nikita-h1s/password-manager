@@ -3,20 +3,20 @@
 {% from 'macros.html' import render_password_section %}
 <div class="d-flex flex-column flex-md-row pt-4 pb-4 pr-4 justify-content-center">
     <div class="list-group resource-stats-list">
-            {{ render_password_section('Weak Passwords', weak_password_list,
-               'icons/weak_password.png', 'Change your passwords', is_first=True) }}
+        {{ render_password_section('Weak Passwords', weak_password_list,
+        'icons/weak_password.png', 'Change your passwords', is_first=True) }}
 
-            {{ render_password_section('Okay Passwords', okay_password_list,
-               'icons/okay_password.png', 'Change your passwords') }}
+        {{ render_password_section('Okay Passwords', okay_password_list,
+        'icons/okay_password.png', 'Change your passwords') }}
 
-            {{ render_password_section('Good Passwords', good_password_list,
-               'icons/good_password.png', 'Change your passwords') }}
+        {{ render_password_section('Good Passwords', good_password_list,
+        'icons/good_password.png', 'Change your passwords') }}
 
-            {{ render_password_section('Strong Passwords', strong_password_list,
-               'icons/strong_password.png', 'Change your passwords') }}
+        {{ render_password_section('Strong Passwords', strong_password_list,
+        'icons/strong_password.png', 'Change your passwords') }}
 
-            {{ render_password_section('Reused Passwords', repeated_password_list,
-               'icons/reused_password.png', 'Create unique passwords') }}
+        {{ render_password_section('Reused Passwords', repeated_password_list,
+        'icons/reused_password.png', 'Create unique passwords') }}
     </div>
 </div>
 {% endblock content %}

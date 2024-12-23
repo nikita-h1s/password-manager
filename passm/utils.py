@@ -1,4 +1,8 @@
 import os
+
+import requests
+from flask import url_for, current_app
+from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from .db import get_db
 import string
@@ -58,10 +62,13 @@ def get_resources_by_vault(vault_id=None):
         resource_id = resource[0]
         resource_creation_date = resource[5].strftime('%d %b %Y, %H:%M')
         pass_last_modified_date = resource[7].strftime('%d %b %Y, %H:%M')
+        resource_url = resource[6]
+        resource_favicon = get_favicon_url(resource_url)
         resource_list[resource_id] = {'name': resource[1], 'username': resource[2],
                                       'email': resource[3], 'password': decrypt_password(resource[4]),
-                                      'resource_creation_date': resource_creation_date, 'resource_url': resource[6],
-                                      'pass_last_modified_date': pass_last_modified_date}
+                                      'resource_creation_date': resource_creation_date, 'resource_url': resource_url,
+                                      'pass_last_modified_date': pass_last_modified_date,
+                                      'resource_favicon': resource_favicon}
 
     return resource_list
 
@@ -189,3 +196,40 @@ def get_password_stats():
 
     return (weak_password_ids, okay_password_ids, good_password_ids,
             strong_password_ids, repeated_password_ids)
+
+
+def get_favicon_url(domain_url):
+    """Fetch and cache favicon for a domain."""
+    FAVICON_CACHE_DIR = os.path.join(current_app.root_path, 'static', 'icons', 'favicons')
+
+    if not os.path.exists(FAVICON_CACHE_DIR):
+        os.makedirs(FAVICON_CACHE_DIR)
+
+    try:
+        # Parse the domain
+        parsed_url = urlparse(domain_url)
+        domain_name = parsed_url.netloc.split(':')[0]
+        if not domain_name:
+            return url_for('static', filename='icons/default_resource_icon.svg')
+
+        # Build favicon cache path
+        filename = f"{domain_name}.png"
+        filepath = os.path.join(FAVICON_CACHE_DIR, filename)
+
+        # Check if favicon is already cached
+        if not os.path.exists(filepath):
+            favicon_url = f"https://www.google.com/s2/favicons?sz=32&domain_url={domain_name}"
+            response = requests.get(favicon_url, timeout=5)
+
+            if response.status_code == 200:
+                with open(filepath, 'wb') as f:
+                    f.write(response.content)
+            else:
+                return url_for('static', filename='icons/default_resource_icon.svg')
+
+        # Return cached favicon URL
+        return url_for('static', filename=f'icons/favicons/{filename}')
+
+    except (requests.RequestException, ValueError) as e:
+        print(f"Error fetching favicon: {e}")
+        return url_for('static', filename='icons/default_resource_icon.svg')
