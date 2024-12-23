@@ -232,3 +232,11 @@ main {
     border: solid 1px #434A50;
     border-radius: 3px;
 }
+
+.sorting-form {
+    width: 200px;
+}
+
+.sorting-form-option {
+    width: 200px;
+}

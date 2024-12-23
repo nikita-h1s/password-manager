@@ -265,6 +265,92 @@ const removeFlashMessages = () => {
 }
 
 
+// Function to render the sorted resources (excluding the <select>)
+const renderResources = sortedResources => {
+    const sortingSelect = document.querySelector('.sorting-form');
+    const resourceList = document.querySelector('.main-resource-list');
+
+    if (resourceList) {
+        resourceList.querySelectorAll('.list-resource-item').
+            forEach(item => item.remove());
+    }
+
+    if (sortingSelect) {
+        // Attach event listener to sorting dropdown
+        sortingSelect.addEventListener('change', handleSortingChange);
+    }
+
+    if (sortedResources) {
+        // Re-add each resource to the list
+        sortedResources.forEach(([id, resource]) => {
+            const resourceItem = `
+                <div href="#" class="resource-to-search list-resource-item list-group-item
+                                     resource-list-item list-group-item-action d-flex gap-3 py-3"
+                     aria-current="true"
+                     data-id="${id}">
+
+                    <img src="${resource.resource_favicon}"
+                         alt="${resource.name}"
+                         width="32" height="32"
+                         class="rounded-circle flex-shrink-0">
+
+                    <div class="pl-2 d-flex w-100 justify-content-between">
+                        <div>
+                            <h6 class="mb-0 resource-to-search-name">${resource.name}</h6>
+                            <p class="mb-0 opacity-75">${resource.email}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            sortingSelect.insertAdjacentHTML('afterend', resourceItem);
+        });
+    }
+
+    setupResourceClickHandlers();
+    searchResource();
+}
+
+
+// Sorting logic
+const sortResources = option => {
+    let resourceArray = Object.entries(resources);
+
+    switch (option) {
+        case '1': // Newest to oldest
+            resourceArray.sort((a, b) =>
+                new Date(a[1].resource_creation_date) - new Date(b[1].resource_creation_date));
+            console.log('Newest to oldest: ', resourceArray);
+            break;
+        case '2': // Oldest to newest
+            resourceArray.sort((a, b) =>
+                new Date(b[1].resource_creation_date) - new Date(a[1].resource_creation_date));
+            console.log('Oldest to newest: ', resourceArray);
+            break;
+        case '3': // Alphabetical
+            resourceArray.sort((a, b) =>
+                b[1].name.localeCompare(a[1].name));
+            console.log('Alphabetical', resourceArray);
+            break;
+    }
+
+    renderResources(resourceArray);
+}
+
+// Handle sorting change
+const handleSortingChange = e => {
+    const selectedOption = e.target.value;
+    sortResources(selectedOption);
+}
+
+
+let sortedResources = null;
+if (typeof resources !== 'undefined' && resources) {
+    sortedResources = Object.entries(resources).sort(
+        (a, b) =>
+            new Date(a[1].resource_creation_date) - new Date(b[1].resource_creation_date)
+    );
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeTooltips();
     setupResourceClickHandlers();
@@ -275,4 +361,6 @@ document.addEventListener('DOMContentLoaded', () => {
     clearSearchInput();
     saveInputText();
     togglePasswordVisibility();
+    // Initial rendering of resources
+    renderResources(sortedResources);
 });
