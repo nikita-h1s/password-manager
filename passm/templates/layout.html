@@ -117,7 +117,7 @@
                 <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
                     {% for vault in vaults %}
                     <li><a href="{{ url_for('main.view_password_list', vault_id=vault.id) }}"
-                           class="link-dark rounded">{{ vault.name }}</a></li>
+                           class=" rounded text-white">{{ vault.name }}</a></li>
                     {% endfor %}
                 </ul>
             </div>

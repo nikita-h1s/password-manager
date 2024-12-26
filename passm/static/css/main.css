@@ -240,3 +240,31 @@ main {
 .sorting-form-option {
     width: 200px;
 }
+
+.min-password-length-group input {
+    width: 130px;
+    height: 30px;
+    margin-left: 8px;
+}
+
+.max-password-length-group input {
+    width: 130px;
+    height: 30px;
+    margin-left: 5px;
+}
+
+.date-start-group input {
+    width: 145px;
+    height: 30px;
+    margin-left: 5px;
+}
+
+.date-end-group input {
+    width: 145px;
+    height: 30px;
+    margin-left: 5px;
+}
+
+.date-end-group {
+    margin-left: 10px;
+}

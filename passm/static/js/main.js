@@ -270,6 +270,9 @@ const renderResources = sortedResources => {
     const sortingSelect = document.querySelector('.sorting-form');
     const resourceList = document.querySelector('.main-resource-list');
 
+    document.querySelector('.sorting-form').addEventListener('change', handleSortingChange);
+    document.getElementById('filter-form').addEventListener('input', handleFilterChange);
+
     if (resourceList) {
         resourceList.querySelectorAll('.list-resource-item').
             forEach(item => item.remove());
@@ -311,30 +314,60 @@ const renderResources = sortedResources => {
 }
 
 
+// Filtering logic
+const filterResources = (resources) => {
+    const startDate = document.getElementById('date-start').value;
+    const endDate = document.getElementById('date-end').value;
+    const minPasswordLength = parseInt(document.getElementById('password-length-min').value, 10);
+    const maxPasswordLength = parseInt(document.getElementById('password-length-max').value, 10);
+
+    return resources.filter(([_, resource]) => {
+        const resourceDate = new Date(resource.resource_creation_date);
+        const passwordLength = resource.password.length;
+
+        // Date filtering
+        if (startDate && resourceDate < new Date(startDate)) return false;
+        if (endDate && resourceDate > new Date(endDate)) return false;
+
+        // Password length filtering
+        if (passwordLength < minPasswordLength || passwordLength > maxPasswordLength) return false;
+
+        return true;
+    });
+};
+
+
 // Sorting logic
 const sortResources = option => {
     let resourceArray = Object.entries(resources);
+
+    resourceArray = filterResources(resourceArray);
 
     switch (option) {
         case '1': // Newest to oldest
             resourceArray.sort((a, b) =>
                 new Date(a[1].resource_creation_date) - new Date(b[1].resource_creation_date));
-            console.log('Newest to oldest: ', resourceArray);
             break;
         case '2': // Oldest to newest
             resourceArray.sort((a, b) =>
                 new Date(b[1].resource_creation_date) - new Date(a[1].resource_creation_date));
-            console.log('Oldest to newest: ', resourceArray);
             break;
         case '3': // Alphabetical
             resourceArray.sort((a, b) =>
                 b[1].name.localeCompare(a[1].name));
-            console.log('Alphabetical', resourceArray);
             break;
     }
 
     renderResources(resourceArray);
 }
+
+
+// Handle filter change
+const handleFilterChange = () => {
+    const selectedOption = document.querySelector('.sorting-form').value;
+    sortResources(selectedOption);
+};
+
 
 // Handle sorting change
 const handleSortingChange = e => {
