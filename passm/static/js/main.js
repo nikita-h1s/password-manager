@@ -257,12 +257,15 @@ const togglePasswordVisibility = () => {
 // Automatically removes flash messages after 3 seconds
 const removeFlashMessages = () => {
     setTimeout(() => {
-        const flashMessages = document.getElementById('flash-messages');
-        if (flashMessages) {
-            flashMessages.remove();
+        const flashMessages = document.getElementsByClassName('flash-message');
+        console.log(flashMessages);
+        if (flashMessages.length > 0) {
+            Array.from(flashMessages).forEach((message) => {
+                message.remove();
+            });
         }
     }, 3000);
-}
+};
 
 
 // Function to render the sorted resources (excluding the <select>)
