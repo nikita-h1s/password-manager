@@ -1,7 +1,8 @@
 import os
 
 import requests
-from flask import url_for, current_app
+from flask import url_for, current_app, session, redirect, flash
+from functools import wraps
 from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from .db import get_db
@@ -233,3 +234,14 @@ def get_favicon_url(domain_url):
     except (requests.RequestException, ValueError) as e:
         print(f"Error fetching favicon: {e}")
         return url_for('static', filename='icons/default_resource_icon.svg')
+
+
+def login_required(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('You need to login first!', 'warning')
+            return redirect(url_for('auth.login'))
+        return func(*args, **kwargs)
+
+    return decorated_view

@@ -18,7 +18,10 @@ def create_app(test_config=None):
         pass
 
     from passm.routes import main
+    from passm.auth import auth_bp
+
     app.register_blueprint(main)
+    app.register_blueprint(auth_bp)
 
     from . import db
     db.init_app(app)

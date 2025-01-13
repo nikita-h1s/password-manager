@@ -6,12 +6,14 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
 
 from .db import get_db
-from .utils import retrieve_vaults, get_resources_by_vault, encrypt_password, decrypt_password, get_password_stats
+from .utils import (retrieve_vaults, get_resources_by_vault, encrypt_password, decrypt_password,
+                    get_password_stats, login_required)
 
 main = Blueprint('main', __name__)
 
 
 @main.route('/resource/new', methods=['GET', 'POST'])
+@login_required
 def add_resource():
     vault_list = retrieve_vaults()
     if request.method == 'POST':
@@ -62,6 +64,7 @@ def add_resource():
 @main.route('/password-list/resource/<int:resource_id>', defaults={'vault_id': None})
 @main.route('/password-list/vault/<int:vault_id>', defaults={'resource_id': None})
 @main.route('/password-list/vault/<int:vault_id>/resource/<int:resource_id>')
+@login_required
 def view_password_list(vault_id, resource_id):
     # TODO: make a global cursor for not recreating same variables
     db = get_db()
@@ -104,6 +107,7 @@ def view_password_list(vault_id, resource_id):
 
 
 @main.route('/vault/new', methods=['GET', 'POST'])
+@login_required
 def add_vault():
     vault_list = retrieve_vaults()
     if request.method == 'POST':
@@ -132,6 +136,7 @@ def add_vault():
 
 @main.route('/')
 @main.route('/home')
+@login_required
 def view_vaults():
     vault_list = retrieve_vaults()
 
@@ -142,6 +147,7 @@ def view_vaults():
 @main.route('/password-list/resource/<int:resource_id>', defaults={'vault_id': None}, methods=['POST'])
 @main.route('/password-list/vault/<int:vault_id>', defaults={'resource_id': None}, methods=['POST'])
 @main.route('/password-list/vault/<int:vault_id>/resource/<int:resource_id>', methods=['POST'])
+@login_required
 def manage_resource(resource_id=None, vault_id=None):
     db = get_db()
     cur = db.cursor()
@@ -195,6 +201,7 @@ def manage_resource(resource_id=None, vault_id=None):
 
 
 @main.route('/pass-monitor/')
+@login_required
 def view_password_statistics():
     vault_list = retrieve_vaults()
     (weak_password_list, okay_password_list, good_password_list,
@@ -209,6 +216,7 @@ def view_password_statistics():
 
 
 @main.route('/export/resources/', methods=['GET', 'POST'])
+@login_required
 def export_resources():
     if request.method == 'GET':
         return render_template('export.html')
