@@ -41,24 +41,29 @@ const setupResourceClickHandlers = () => {
         }
     };
 
-    resourceItems.forEach(item => {
-        item.addEventListener('click', (event) => {
-            event.preventDefault();
+    if (resourceItems.length === 0) {
+        console.warn('No resource items found');
+        return;
+    } else {
+        resourceItems.forEach(item => {
+            item.addEventListener('click', (event) => {
+                event.preventDefault();
 
-            const resourceId = item.getAttribute('data-id');
-            setActiveItem(item);
-            loadResourceDetails(resourceId);
+                const resourceId = item.getAttribute('data-id');
+                setActiveItem(item);
+                loadResourceDetails(resourceId);
 
-            const urlPath = window.location.pathname;
-            const vaultIdMatch = urlPath.match(/\/password-list\/vault\/(\d+)/);
-            const vaultId = vaultIdMatch ? vaultIdMatch[1] : null;
+                const urlPath = window.location.pathname;
+                const vaultIdMatch = urlPath.match(/\/password-list\/vault\/(\d+)/);
+                const vaultId = vaultIdMatch ? vaultIdMatch[1] : null;
 
-            const newUrl = vaultId
-                ? `/password-list/vault/${vaultId}/resource/${resourceId}`
-                : `/password-list/resource/${resourceId}`;
-            window.history.pushState({ resourceId }, '', newUrl);
+                const newUrl = vaultId
+                    ? `/password-list/vault/${vaultId}/resource/${resourceId}`
+                    : `/password-list/resource/${resourceId}`;
+                window.history.pushState({resourceId}, '', newUrl);
+            });
         });
-    });
+    }
 
     let selectedResourceId = null;
     if (selectedResourceId) {
@@ -264,7 +269,7 @@ const removeFlashMessages = () => {
                 message.remove();
             });
         }
-    }, 3000);
+    }, 5000);
 };
 
 

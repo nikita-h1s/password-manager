@@ -13,7 +13,9 @@ def retrieve_vaults():
     """Returns a list of vaults"""
     db = get_db()
     cur = db.cursor()
-    sql_query = "SELECT vault.vault_id, vault.vault_name, vault.vault_description FROM vault;"
+    user_id = session.get('user_id')
+    sql_query = (f"SELECT vault.vault_id, vault.vault_name, vault.vault_description "
+                 f"FROM vault WHERE user_id = {user_id};")
     cur.execute(sql_query)
     vaults = cur.fetchall()
     cur.close()

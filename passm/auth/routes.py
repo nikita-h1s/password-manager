@@ -63,6 +63,11 @@ def register():
 
             cur.execute("SELECT * FROM user WHERE email = %s", (form.email.data,))
             user = cur.fetchone()
+
+            cur.execute("INSERT INTO vault (vault_name, vault_description, user_id) VALUES (%s, %s, %s)",
+                        ("Personal", "Vault for personal resources.", user['id']))
+
+            db.commit()
             cur.close()
 
             session['user_id'] = user['id']

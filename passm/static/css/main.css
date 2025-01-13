@@ -227,6 +227,8 @@ main {
 }
 
 .export-group {
+    margin-top: 25px;
+    margin-left: 15px;
     width: 500px;
     height: 235px;
     border: solid 1px #434A50;
@@ -267,4 +269,13 @@ main {
 
 .date-end-group {
     margin-left: 10px;
+}
+
+.no-resources-container {
+    margin-left: 20px;
+}
+
+.no-resources-alert {
+    width: 600px;
+    height: 120px;
 }

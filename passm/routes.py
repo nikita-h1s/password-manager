@@ -3,7 +3,7 @@ import io
 import json
 from datetime import datetime
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, Response, session
 
 from .db import get_db
 from .utils import (retrieve_vaults, get_resources_by_vault, encrypt_password, decrypt_password,
@@ -118,9 +118,10 @@ def add_vault():
         if vault:
             db = get_db()
             cur = db.cursor()
+            user_id = session.get('user_id')
             try:
-                cur.execute("INSERT INTO vault (vault_name, vault_description) VALUES (%s, %s)",
-                            (vault, description))
+                cur.execute("INSERT INTO vault (vault_name, vault_description, user_id) VALUES (%s, %s, %s)",
+                            (vault, description, user_id))
                 db.commit()
                 flash('Vault added successfully', 'info')
                 return redirect(url_for('main.add_vault'))
@@ -232,6 +233,10 @@ def export_resources():
     """
     cur.execute(query)
     resources = cur.fetchall()
+
+    if len(resources) <= 0:
+        flash('No resources found to export', 'danger')
+        return render_template('export.html')
 
     for resource in resources:
         encrypted_password = resource.pop("encrypted_password", None)  # Remove encrypted_password from the dictionary

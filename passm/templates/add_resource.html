@@ -2,41 +2,46 @@
 {% block content %}
     <div class="form-wrapper">
         <form action="" method="post">
-            <div class="form-group">
+            <div class="form-group mb-2">
                 <label for="resource-field">Resource name</label>
                 <input type="text" class="form-control" id="resource-field" placeholder="Enter resource"
                        name="name" autocomplete="off">
             </div>
 
-            <div class="form-group">
+            <div class="form-group mb-2">
                 <label for="pass-field">Username</label>
                 <input type="text" class="form-control" id="username-field" placeholder="Enter username"
                        name="username">
             </div>
 
-            <div class="form-group">
+            <div class="form-group mb-2">
                 <label for="pass-field">Email</label>
                 <input type="text" class="form-control" id="email-field" placeholder="Enter email"
                        name="email">
             </div>
 
-            <div class="form-group">
+            <div class="form-group mb-2">
                 <label for="pass-field">Password</label>
                 <input type="password" class="form-control" id="pass-field" placeholder="Password"
                        name="password">
             </div>
 
-            <div class="form-group">
+            <div class="form-group mb-2">
                 <label for="url-field">Resource URL</label>
                 <input type="text" class="form-control" id="url-field" placeholder="Enter URL"
                        name="url" autocomplete="off">
             </div>
 
-            <select class="form-select" aria-label="Vault select menu" name="vault-id">
-                <option selected disabled>Select a vault</option>
+            <select class="form-select mb-3" aria-label="Vault select menu" name="vault-id">
+                {% if vaults %}
                 {% for vault in vaults %}
-                    <option value="{{ vault.id }}">{{ vault.name }}</option>
+                    <option value="{{ vault.id }}" {% if loop.first %}selected{% endif %}>
+                        {{ vault.name }}
+                    </option>
                 {% endfor %}
+                {% else %}
+                    <option selected disabled>No vaults available</option>
+                {% endif %}
             </select>
 
             <button type="submit" class="btn btn-primary">Add</button>
