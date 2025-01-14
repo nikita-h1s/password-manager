@@ -1,4 +1,4 @@
-{% from "modal.html" import modal %}
+{% from "modals/modal.html" import modal %}
 
 {% extends "layout.html" %}
 {% block content %}
@@ -45,7 +45,7 @@
     <!-- Modal -->
     {{ modal(
         id="exportLogModal",
-        body="export_log_body.html",
+        body="modals/modal_body_export_log.html",
         title="Export Log",
         footer_buttons=[
         {"type": "secondary", "label": "Close", "dismiss": True}

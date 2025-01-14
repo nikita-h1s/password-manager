@@ -264,6 +264,46 @@ const togglePasswordVisibility = () => {
 }
 
 
+const showPasswordHistory = () => {
+    const historyButtons = document.querySelectorAll('.show-password-history-btn');
+
+    historyButtons.forEach(button => {
+        button.addEventListener('click', async (event) => {
+            const modalBody = document.querySelector('#passwordHistoryModal .modal-body');
+            const resourceId = document.querySelector('.list-resource-item.list-group-item-active')
+                ?.getAttribute('data-id');
+
+            if (!resourceId) {
+                modalBody.innerHTML = '<p>No resource selected.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/password-history/${resourceId}`);
+                if (response.ok) {
+                    const passwordHistory = await response.json();
+                    modalBody.innerHTML = `
+                        <ul class="list-group password-history-list">
+                            ${passwordHistory.map(history => `
+                                <li class="list-group-item">
+                                    <strong>Changed At:</strong> ${history.changed_at}<br>
+                                    <strong>Old Password:</strong> ${history.old_encrypted_password}
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `;
+                } else {
+                    modalBody.innerHTML = '<p>No password change found.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching password history:', error);
+                modalBody.innerHTML = '<p>Unable to load password history.</p>';
+            }
+        });
+    });
+}
+
+
 // Automatically removes flash messages after 3 seconds
 const removeFlashMessages = () => {
     setTimeout(() => {
@@ -406,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearSearchInput();
     saveInputText();
     togglePasswordVisibility();
+    showPasswordHistory();
     // Initial rendering of resources
     renderResources(sortedResources);
 });

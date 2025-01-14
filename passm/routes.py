@@ -3,7 +3,7 @@ import io
 import json
 from datetime import datetime
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, Response, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, Response, session, jsonify
 
 from .db import get_db
 from .utils import (retrieve_vaults, get_resources_by_vault, encrypt_password, decrypt_password,
@@ -333,3 +333,33 @@ def export_resources():
 
     # If format is invalid, return an error response
     return "Invalid format selected", 400
+
+
+@main.route('/api/password-history/', methods=['GET'])
+@main.route('/api/password-history/<int:resource_id>', methods=['GET'])
+def get_password_history(resource_id):
+    if not resource_id:
+        return jsonify({"error": "Resource ID is required"}), 400
+
+    db = get_db()
+    cursor = db.cursor()
+    query = """
+        SELECT old_encrypted_password, changed_at
+        FROM password_history
+        WHERE password_id = %s
+        ORDER BY changed_at DESC
+    """
+    cursor.execute(query, (resource_id,))
+    history = cursor.fetchall()
+    cursor.close()
+
+    if not history:
+        return jsonify({"message": "No password history found for the provided resource ID"}), 404
+
+    return jsonify([
+        {
+            "old_encrypted_password": decrypt_password(row[0]),
+            "changed_at": row[1].strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        for row in history
+    ])
