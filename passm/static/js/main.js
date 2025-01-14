@@ -321,9 +321,13 @@ const removeFlashMessages = () => {
 const renderResources = sortedResources => {
     const sortingSelect = document.querySelector('.sorting-form');
     const resourceList = document.querySelector('.main-resource-list');
+    const sortingForm = document.querySelector('.sorting-form')
+    const filterForm = document.getElementById('filter-form')
 
-    document.querySelector('.sorting-form').addEventListener('change', handleSortingChange);
-    document.getElementById('filter-form').addEventListener('input', handleFilterChange);
+    if (sortingForm && filterForm) {
+        sortingForm.addEventListener('change', handleFilterChange);
+        filterForm.addEventListener('input', handleFilterChange);
+    }
 
     if (resourceList) {
         resourceList.querySelectorAll('.list-resource-item').
@@ -428,6 +432,82 @@ const handleSortingChange = e => {
 }
 
 
+const loadUserData = () => {
+    document.querySelector('#username').value = user.username;
+    document.querySelector('#email').value = user.email;
+}
+
+
+const changeUserData = () => {
+    const userForm = document.querySelector('form.needs-validation');
+
+    if (userForm) {
+        userForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            // Get form data
+            const username = document.querySelector('#username').value;
+            const email = document.querySelector('#email').value;
+            const automaticLogoutTime = parseInt(document.querySelector('#automatic-logout-time').value, 10);
+            const showPasswordsByDefault = document.querySelector('#show-passwords-by-default').checked;
+
+            // Create the request payload
+            const payload = {
+                username,
+                email,
+                automatic_logout_time: automaticLogoutTime,
+                show_passwords_by_default: showPasswordsByDefault,
+            };
+
+            try {
+                // Send the PUT request
+                const response = await fetch('/api/user', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await response.json();
+
+                // if (response.ok) {
+                //     startAutoLogoutTimer(result.automatic_logout_time);
+                // }
+                if (response.ok) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An unexpected error occurred. Please try again.');
+            }
+        });
+    }
+};
+
+
+
+let inactivityTimer;
+const startAutoLogoutTimer = (logoutTimeInMinutes) => {
+    const logoutTimeInMilliseconds = logoutTimeInMinutes * 60 * 1000;
+    console.log("1: " + logoutTimeInMilliseconds);
+
+    clearTimeout(inactivityTimer);
+
+    inactivityTimer = setTimeout(() => {
+        window.location.href = '/logout';
+        console.log(logoutTimeInMilliseconds);
+    }, logoutTimeInMilliseconds);
+
+    document.addEventListener('mousemove', resetInactivityTimer);
+    document.addEventListener('keypress', resetInactivityTimer);
+};
+
+
+const resetInactivityTimer = () => {
+    clearTimeout(inactivityTimer);
+    startAutoLogoutTimer(user.automatic_logout_time);
+};
+
+
 let sortedResources = null;
 if (typeof resources !== 'undefined' && resources) {
     sortedResources = Object.entries(resources).sort(
@@ -449,4 +529,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showPasswordHistory();
     // Initial rendering of resources
     renderResources(sortedResources);
+    if (typeof user !== 'undefined' && user) {
+        loadUserData();
+    }
+    changeUserData();
 });

@@ -68,9 +68,21 @@ def add_resource():
 def view_password_list(vault_id, resource_id):
     # TODO: make a global cursor for not recreating same variables
     db = get_db()
-    cur = db.cursor()
+    cur = db.cursor(dictionary=True)
 
     user_id = session.get('user_id')
+
+    cur.execute("""
+            SELECT u.username, u.email, uc.automatic_logout_time, uc.show_passwords_by_default
+            FROM user u
+            JOIN user_configuration uc ON u.id = uc.user_id
+            WHERE u.id = %s
+        """, (user_id,))
+    user = cur.fetchone()
+    cur.close()
+
+    db = get_db()
+    cur = db.cursor()
 
     selected_resource_id = None
     vault_name = None
@@ -106,7 +118,8 @@ def view_password_list(vault_id, resource_id):
         resources=resource_list,
         vaults=vault_list,
         selected_resource_id=selected_resource_id,
-        vault_name=vault_name
+        vault_name=vault_name,
+        user=user
     )
 
 
@@ -169,7 +182,6 @@ def manage_resource(resource_id=None, vault_id=None):
             resource_email = resource_details.get('email')
             resource_url = resource_details.get('url')
             resource_password = resource_details.get('password')
-
 
             cur.execute("SELECT * FROM resource WHERE resource_id = %s", (resource_id,))
             resource = cur.fetchone()
@@ -366,3 +378,97 @@ def get_password_history(resource_id):
         }
         for row in history
     ])
+
+
+@main.route('/account/settings', methods=['GET', 'POST'])
+@login_required
+def account_settings():
+    vault_list = retrieve_vaults()
+    user_id = session['user_id']
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT u.username, u.email, uc.automatic_logout_time, uc.show_passwords_by_default
+        FROM user u
+        JOIN user_configuration uc ON u.id = uc.user_id
+        WHERE u.id = %s
+    """, (user_id,))
+    user = cursor.fetchone()
+
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('auth.login'))
+
+    return render_template('account_settings.html', user=user, vaults=vault_list)
+
+
+@main.route('/api/user', methods=['PUT'])
+@login_required
+def update_user():
+    if 'user_id' not in session:
+        flash("User not found.", "danger")
+        return jsonify({"error": "User session is not initialized"}), 401
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        email = data.get('email')
+        automatic_logout_time = data.get('automatic_logout_time')
+        show_passwords_by_default = data.get('show_passwords_by_default')
+
+        if not username or not email:
+            flash("Invalid input. Please provide both username and email.", "danger")
+            return jsonify({"error": "Invalid input"}), 400
+
+        if automatic_logout_time not in [30, 60, 360, 1440]:
+            flash("Invalid automatic logout time.", "danger")
+            return jsonify({"error": "Invalid automatic logout time"}), 400
+
+        if not isinstance(show_passwords_by_default, bool):
+            flash("Invalid value for show passwords by default.", "danger")
+            return jsonify({"error": "Invalid value for show passwords by default"}), 400
+
+        # Check if the email is already in use by another user
+
+        cursor.execute("""
+            SELECT id FROM user WHERE email = %s AND id != %s
+        """, (email, session['user_id']))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            flash("The email is already associated with another account.", "danger")
+            return jsonify({"error": "Email already in use"}), 409
+
+        # Perform database updates
+        cursor.execute("""
+            UPDATE user
+            SET username = %s, email = %s
+            WHERE id = %s
+        """, (username, email, session['user_id']))
+
+        cursor.execute("""
+            UPDATE user_configuration
+            SET automatic_logout_time = %s,
+                show_passwords_by_default = %s
+            WHERE user_id = %s
+        """, (automatic_logout_time, show_passwords_by_default, session['user_id']))
+
+        db.commit()
+
+        # Update session data
+        session['username'] = username
+        session['email'] = email
+
+        flash("Your profile has been updated successfully.", "success")
+        return jsonify({"message": "User data updated successfully"}), 200
+    except Exception as e:
+        # Log the error for debugging
+        import traceback
+        traceback.print_exc()
+
+        db.rollback()
+        flash("An error occurred while updating your profile. Please try again.", "danger")
+        return jsonify({"error": str(e)}), 500

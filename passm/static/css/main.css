@@ -283,3 +283,13 @@ main {
 .toggle-password-btn {
     margin-right: 4px;
 }
+
+#user-settings-form {
+    width: 500px
+}
+
+.user-settings-container {
+    width: 500px;
+    margin-top: 20px;
+    margin-left: 20px;
+}

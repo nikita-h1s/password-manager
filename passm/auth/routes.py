@@ -19,13 +19,15 @@ def login():
 
         cur.execute("SELECT * FROM user WHERE email = %s", (form.email.data,))
         user = cur.fetchone()
-        print(user)
 
         if user is None:
             flash('No user found with that email address.', 'danger')
         elif check_password_hash(user['master_password'], form.master_password.data):
             # Successful login
             session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['email'] = user['email']
+
             flash('Logged in successfully!', 'success')
             return redirect(url_for('main.view_password_list'))
         else:
@@ -67,10 +69,18 @@ def register():
             cur.execute("INSERT INTO vault (vault_name, vault_description, user_id) VALUES (%s, %s, %s)",
                         ("Personal", "Vault for personal resources.", user['id']))
 
+            cur.execute(
+                "INSERT INTO user_configuration (automatic_logout_time, two_factor_auth, "
+                "show_passwords_by_default, user_id) VALUES (%s, %s, %s, %s)",
+                (60, False, False, user['id'])
+            )
+
             db.commit()
             cur.close()
 
             session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['email'] = user['email']
 
             flash('Registration successful', 'success')
             return redirect(url_for('main.view_password_list'))
@@ -81,4 +91,8 @@ def register():
 @auth_bp.route('/logout')
 def logout():
     session.clear()
+    flash("You have been logged out due to inactivity.", "info")
     return redirect(url_for('auth.login'))
+
+
+
