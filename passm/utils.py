@@ -36,6 +36,9 @@ def retrieve_vaults():
 def get_resources_by_vault(vault_id=None):
     db = get_db()
     cur = db.cursor()
+
+    user_id = session.get('user_id')
+
     if vault_id:
         sql_query = """
                 SELECT resource.resource_id, resource.resource_name, resource.resource_username,
@@ -44,17 +47,21 @@ def get_resources_by_vault(vault_id=None):
                 FROM resource
                 INNER JOIN password ON password.resource_id = resource.resource_id
                 INNER JOIN resource_vault ON resource.resource_id = resource_vault.resource_id
-                WHERE resource_vault.vault_id = %s;
+                INNER JOIN vault ON vault.vault_id = resource_vault.vault_id
+                WHERE vault.user_id = %s AND vault.vault_id = %s;
             """
-        cur.execute(sql_query, (vault_id,))
+        cur.execute(sql_query, (user_id, vault_id,))
     else:
         sql_query = """SELECT resource.resource_id, resource.resource_name, resource.resource_username,
                               resource.resource_email, password.encrypted_password,
                               resource.creation_date, resource.resource_url, password.last_modified_date 
                        FROM resource
-                       INNER JOIN password
-                       ON password.resource_id = resource.resource_id;"""
-        cur.execute(sql_query)
+                       INNER JOIN password ON password.resource_id = resource.resource_id
+                       INNER JOIN resource_vault ON resource.resource_id = resource_vault.resource_id
+                       INNER JOIN vault ON vault.vault_id = resource_vault.vault_id
+                       WHERE vault.user_id = %s;
+                    """
+        cur.execute(sql_query, (user_id,))
 
     resources = cur.fetchall()
     cur.close()
@@ -140,8 +147,15 @@ def get_password_stats():
     db = get_db()
     cur = db.cursor()
 
-    sql_query = """SELECT password_id, encrypted_password FROM password"""
-    cur.execute(sql_query)
+    user_id = session.get('user_id')
+
+    sql_query = """SELECT password_id, encrypted_password 
+                     FROM password
+                     INNER JOIN resource ON password.resource_id = resource.resource_id
+                     INNER JOIN resource_vault ON resource.resource_id = resource_vault.resource_id
+                     INNER JOIN vault ON vault.vault_id = resource_vault.vault_id
+                     WHERE vault.user_id = %s"""
+    cur.execute(sql_query, (user_id,))
     password_list = cur.fetchall()
 
     # Looking for weak passwords

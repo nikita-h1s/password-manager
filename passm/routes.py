@@ -70,13 +70,17 @@ def view_password_list(vault_id, resource_id):
     db = get_db()
     cur = db.cursor()
 
+    user_id = session.get('user_id')
+
     selected_resource_id = None
     vault_name = None
     if resource_id:
         query = """SELECT resource.resource_id
                            FROM resource
-                           WHERE resource.resource_id = %s"""
-        cur.execute(query, (resource_id,))
+                           INNER JOIN resource_vault ON resource.resource_id = resource_vault.resource_id
+                           INNER JOIN vault ON vault.vault_id = resource_vault.vault_id
+                           WHERE vault.user_id = %s AND resource.resource_id = %s"""
+        cur.execute(query, (user_id, resource_id,))
         result = cur.fetchone()
         cur.close()
         if result:
@@ -87,8 +91,8 @@ def view_password_list(vault_id, resource_id):
         resource_list = get_resources_by_vault(vault_id)
         db = get_db()
         cur = db.cursor()
-        vault_name_query = "SELECT vault_name FROM vault WHERE vault_id = %s"
-        cur.execute(vault_name_query, (vault_id,))
+        vault_name_query = "SELECT vault_name FROM vault WHERE vault_id = %s AND vault.user_id = %s"
+        cur.execute(vault_name_query, (vault_id, user_id,))
         vault_name_result = cur.fetchone()
         if vault_name_result:
             vault_name = vault_name_result[0]  # Get the vault name
@@ -241,8 +245,7 @@ def export_resources():
             SELECT file_type, num_of_exported_resources, user_id, export_date
             FROM resources_export
             WHERE user_id = %s
-            ORDER BY export_date DESC
-            LIMIT 10;
+            ORDER BY export_date DESC;
         """, (session.get('user_id'),))
     log_data = cur.fetchall()
     print(log_data)
