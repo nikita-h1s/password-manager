@@ -232,6 +232,7 @@ def view_password_statistics():
 @main.route('/export/resources/', methods=['GET', 'POST'])
 @login_required
 def export_resources():
+    vault_list = retrieve_vaults()
     db = get_db()
     cur = db.cursor(dictionary=True)
 
@@ -247,7 +248,7 @@ def export_resources():
     print(log_data)
 
     if request.method == 'GET':
-        return render_template('export.html', log_data=log_data)
+        return render_template('export.html', log_data=log_data, vaults=vault_list)
 
     file_format = request.form.get('format', 'csv')
 
