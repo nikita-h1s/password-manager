@@ -151,7 +151,7 @@ def view_vaults():
 @login_required
 def manage_resource(resource_id=None, vault_id=None):
     db = get_db()
-    cur = db.cursor()
+    cur = db.cursor(dictionary=True)
 
     if not resource_id:
         resource_id = request.form.get('resource-id')
@@ -165,10 +165,23 @@ def manage_resource(resource_id=None, vault_id=None):
             resource_email = resource_details.get('email')
             resource_url = resource_details.get('url')
             resource_password = resource_details.get('password')
+
+
             cur.execute("SELECT * FROM resource WHERE resource_id = %s", (resource_id,))
             resource = cur.fetchone()
-            if resource:
+            cur.execute("SELECT * FROM password WHERE resource_id = %s", (resource_id,))
+            password = cur.fetchone()
+
+            if resource and password:
                 encrypted_password = encrypt_password(resource_password)
+
+                # Add old password to password_history table
+                cur.execute(
+                    """INSERT INTO password_history (password_id, old_encrypted_password)
+                       VALUES (%s, %s)""",
+                    (password['password_id'], password['encrypted_password'])
+                )
+
                 sql_query_resource = """UPDATE resource
                                SET resource_name = %s,
                                    resource.resource_url = %s,
@@ -219,19 +232,35 @@ def view_password_statistics():
 @main.route('/export/resources/', methods=['GET', 'POST'])
 @login_required
 def export_resources():
-    if request.method == 'GET':
-        return render_template('export.html')
-
-    file_format = request.form.get('format', 'csv')
     db = get_db()
     cur = db.cursor(dictionary=True)
+
+    # Fetch export logs
+    cur.execute("""
+            SELECT file_type, num_of_exported_resources, user_id, export_date
+            FROM resources_export
+            WHERE user_id = %s
+            ORDER BY export_date DESC
+            LIMIT 10;
+        """, (session.get('user_id'),))
+    log_data = cur.fetchall()
+    print(log_data)
+
+    if request.method == 'GET':
+        return render_template('export.html', log_data=log_data)
+
+    file_format = request.form.get('format', 'csv')
+
     query = """
     SELECT resource.resource_name, resource.resource_email, resource.resource_username, resource.resource_url,
            resource.creation_date, password.encrypted_password
     FROM resource
-    INNER JOIN password ON resource.resource_id = password.resource_id;
+    INNER JOIN password ON resource.resource_id = password.resource_id
+    INNER JOIN resource_vault ON resource.resource_id = resource_vault.resource_id
+    INNER JOIN vault ON vault.vault_id = resource_vault.vault_id
+    WHERE vault.user_id = %s;
     """
-    cur.execute(query)
+    cur.execute(query, (session.get('user_id'),))
     resources = cur.fetchall()
 
     if len(resources) <= 0:
@@ -245,6 +274,19 @@ def export_resources():
                 resource["password"] = decrypt_password(encrypted_password)  # Add decrypted value as "password"
             except Exception as e:
                 resource["password"] = f"Error: {str(e)}"
+
+    def log_data():
+        # Log export metadata in the database
+        try:
+            cur.execute("""
+                            INSERT INTO resources_export (file_type, num_of_exported_resources, user_id)
+                            VALUES (%s, %s, %s);
+                        """, (file_format, len(resources), session['user_id']))
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            flash(f"Error logging export metadata: {str(e)}", 'danger')
+            return render_template('export.html')
 
     if file_format == 'csv':
         # Generate CSV file
@@ -264,6 +306,9 @@ def export_resources():
         writer.writerow(footer_row)
 
         output.seek(0)
+
+        log_data()
+
         return Response(
             output.getvalue(),
             mimetype='text/csv',
@@ -275,6 +320,8 @@ def export_resources():
             for key, value in resource.items():
                 if isinstance(value, datetime):
                     resource[key] = value.isoformat()
+
+        log_data()
 
         # Generate JSON file
         return Response(

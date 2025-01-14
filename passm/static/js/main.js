@@ -263,7 +263,6 @@ const togglePasswordVisibility = () => {
 const removeFlashMessages = () => {
     setTimeout(() => {
         const flashMessages = document.getElementsByClassName('flash-message');
-        console.log(flashMessages);
         if (flashMessages.length > 0) {
             Array.from(flashMessages).forEach((message) => {
                 message.remove();

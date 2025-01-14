@@ -1,0 +1,11 @@
+<ul class="list-group">
+  {% for log in log_data %}
+  <li class="list-group-item">
+    <strong>Date:</strong> {{ log.export_date }} <br>
+    <strong>File Type:</strong> {{ log.file_type }} <br>
+    <strong>Exported Passwords:</strong> {{ log.num_of_exported_resources }}
+  </li>
+  {% else %}
+  <li class="list-group-item">No export logs found.</li>
+  {% endfor %}
+</ul>
