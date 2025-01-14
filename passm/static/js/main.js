@@ -49,7 +49,12 @@ const setupResourceClickHandlers = () => {
             item.addEventListener('click', (event) => {
                 event.preventDefault();
 
-                const resourceId = item.getAttribute('data-id');
+                const resourceId = event.currentTarget.getAttribute('data-id');
+
+                if (!resourceId) {
+                    return;
+                }
+
                 setActiveItem(item);
                 loadResourceDetails(resourceId);
 

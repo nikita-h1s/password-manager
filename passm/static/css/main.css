@@ -279,3 +279,7 @@ main {
     width: 600px;
     height: 120px;
 }
+
+.toggle-password-btn {
+    margin-right: 4px;
+}

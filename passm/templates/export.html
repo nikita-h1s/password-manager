@@ -43,7 +43,6 @@
     </button>
 
     <!-- Modal -->
-
     {{ modal(
         id="exportLogModal",
         body="export_log_body.html",
@@ -51,7 +50,7 @@
         footer_buttons=[
         {"type": "secondary", "label": "Close", "dismiss": True}
         ],
-        log_data=log_data
+        data_to_pass=log_data
     ) }}
 </div>
 {% endblock content %}
