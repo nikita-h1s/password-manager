@@ -63,6 +63,12 @@
             id="floatingPassword", placeholder="Password") }}
             <label for="floatingPassword">{{ form.master_password.label.text }}</label>
         </div>
+        {% if action == "login" %}
+        <div class="form-floating">
+            {{ form.totp_code(class="form-control", id="floating2FACode", placeholder="2fa-code") }}
+            <label for="floating2FACode">{{ form.totp_code.label.text }}</label>
+        </div>
+        {% endif %}
         {% if action == "register" %}
         <div class="form-floating">
             {{ form.confirm_password(class="form-control", id="floatingConfirmPassword", placeholder="Confirm Password")
@@ -94,6 +100,7 @@
         </div>
 
         <div class="error-container">
+            {% if action == "register" %}
             {% for error in form.username.errors %}
             <div class="alert alert-danger d-flex align-items-center mt-2" role="alert">
                 <svg class="bi flex-shrink-0 me-2" role="img" width="17px" height="17px" aria-label="Danger:"
@@ -103,6 +110,7 @@
                 <div>{{ error }}</div>
             </div>
             {% endfor %}
+            {% endif %}
 
             {% for error in form.email.errors %}
             <div class="alert alert-danger d-flex align-items-center mt-2" role="alert">
@@ -124,6 +132,7 @@
             </div>
             {% endfor %}
 
+            {% if action == "register" %}
             {% for error in form.confirm_password.errors %}
             <div class="alert alert-danger d-flex align-items-center mt-2" role="alert">
                 <svg class="bi flex-shrink-0 me-2" role="img" width="17px" height="17px" aria-label="Danger:"
@@ -133,6 +142,7 @@
                 <div>{{ error }}</div>
             </div>
             {% endfor %}
+            {% endif %}
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}

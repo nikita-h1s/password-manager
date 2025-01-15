@@ -292,8 +292,13 @@ main {
     width: 500px;
     margin-top: 20px;
     margin-left: 20px;
+    overflow: auto;
 }
 
 .icon-white {
     filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+}
+
+.qr-code-2fa {
+    width: 200px;
 }

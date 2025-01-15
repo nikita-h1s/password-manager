@@ -388,12 +388,22 @@ def account_settings():
     db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("""
-        SELECT u.username, u.email, uc.automatic_logout_time, uc.show_passwords_by_default
-        FROM user u
-        JOIN user_configuration uc ON u.id = uc.user_id
+        SELECT u.username, u.email, 
+               uc.automatic_logout_time, uc.show_passwords_by_default, 
+               tfa.status AS status_2fa
+        FROM user AS u
+        JOIN user_configuration AS uc ON u.id = uc.user_id
+        JOIN two_factor_auth AS tfa ON uc.user_configuration_id = tfa.user_configuration_id
         WHERE u.id = %s
     """, (user_id,))
+
     user = cursor.fetchone()
+
+    username = user['username']
+    email = user['email']
+    status_2fa = user['status_2fa']
+
+    print(f"Username: {username}, Email: {email}, 2FA Status: {status_2fa}")
 
     if not user:
         flash("User not found.", "danger")

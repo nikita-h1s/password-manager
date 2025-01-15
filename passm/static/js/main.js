@@ -502,6 +502,42 @@ const startAutoLogoutTimer = (logoutTimeInMinutes) => {
 };
 
 
+const toggle2FA = (checkbox) => {
+    const qrContainer = document.getElementById('qr-container');
+    qrContainer.style.display = checkbox.checked ? 'block' : 'none';
+};
+
+
+const submit2FAForm = (checkbox) => {
+    const form = document.getElementById('2fa-form');
+    const formData = new FormData(form);
+    formData.set('allow_2fa', checkbox.checked ? 'on' : 'off');
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Toggle the visibility of QR code dynamically
+                const qrContainer = document.getElementById('qr-container');
+                qrContainer.style.display = checkbox.checked ? 'block' : 'none';
+            } else {
+                alert(data.error || 'Failed to update 2FA status.');
+                // Revert checkbox state if update failed
+                checkbox.checked = !checkbox.checked;
+            }
+        })
+        .catch(error => {
+            console.error('Error updating 2FA status:', error);
+            alert('An error occurred. Please try again later.');
+            // Revert checkbox state if update failed
+            checkbox.checked = !checkbox.checked;
+        });
+};
+
+
 const resetInactivityTimer = () => {
     clearTimeout(inactivityTimer);
     startAutoLogoutTimer(user.automatic_logout_time);
@@ -533,4 +569,5 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUserData();
     }
     changeUserData();
+    toggle2FA();
 });

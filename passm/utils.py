@@ -1,12 +1,15 @@
 import os
+from io import BytesIO
 
 import requests
-from flask import url_for, current_app, session, redirect, flash
+from flask import url_for, current_app, session, redirect, flash, make_response
 from functools import wraps
 from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from .db import get_db
 import string
+import pyotp
+import qrcode
 
 
 def retrieve_vaults():
@@ -261,3 +264,22 @@ def login_required(func):
         return func(*args, **kwargs)
 
     return decorated_view
+
+
+def generate_totp_secret():
+    return pyotp.random_base32()
+
+
+def generate_qr_code(username, secret):
+    totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=username, issuer_name="passm")
+    qr = qrcode.make(totp_uri)
+    output = BytesIO()
+    qr.save(output, "PNG")
+    output.seek(0)
+    return make_response(output.getvalue(), 200, {'Content-Type': 'image/png'})
+
+
+def verify_totp_code(secret, code):
+    """Verify the TOTP code using the provided secret."""
+    totp = pyotp.TOTP(secret)
+    return totp.verify(code)

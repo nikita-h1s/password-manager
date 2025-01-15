@@ -7,6 +7,7 @@ class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     master_password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
+    totp_code = StringField('2FA Code')
     submit = SubmitField('Log In')
 
 
